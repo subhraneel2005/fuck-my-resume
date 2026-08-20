@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import { FaFilePdf, FaUpload } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
-import { CardTitle } from "@/components/ui/card"
+
 
 interface ResumeUploadStep {
   onFileSelect: (file: File) => void

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #fdfefc;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        font-optical-sizing: auto;
+        color: #111111;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #ffffff;
+        will-change: transform;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      #s1 {
+        z-index: 1;
+        background: #ffffff;
+      }
+      #s2 {
+        z-index: 2;
+        background: #ffffff;
+        opacity: 0;
+      }
+      #s3 {
+        z-index: 3;
+        background: #ffffff;
+        opacity: 0;
+      }
+      #s4 {
+        z-index: 4;
+        background: #ffffff;
+        opacity: 0;
+      }
+      #s5 {
+        z-index: 5;
+        background: #ffffff;
+        opacity: 0;
+      }
+
+      .fx-glow {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .rule {
+        position: absolute;
+        background: #b8f56a;
+        pointer-events: none;
+      }
+
+      /* Scene 1 — hook */
+      #s1-l1 {
+        left: 0;
+        right: 0;
+        top: 250px;
+        height: 150px;
+        text-align: center;
+        font-size: 96px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #111111;
+        will-change: transform, opacity;
+      }
+      #s1-underline {
+        left: 560px;
+        top: 430px;
+        width: 800px;
+        height: 10px;
+        transform-origin: 50% 50%;
+      }
+      #s1-l2 {
+        left: 0;
+        right: 0;
+        top: 470px;
+        height: 120px;
+        text-align: center;
+        font-size: 62px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: #2a2a2a;
+        will-change: transform, opacity;
+      }
+      #s1-kicker {
+        left: 0;
+        right: 0;
+        top: 740px;
+        height: 80px;
+        text-align: center;
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #6b6b6b;
+      }
+      #s1-glow {
+        right: -280px;
+        top: -300px;
+        width: 900px;
+        height: 900px;
+        background: radial-gradient(circle at center, rgba(168, 240, 82, 0.55), rgba(168, 240, 82, 0) 65%);
+      }
+
+      /* Scene 2 — reveal */
+      #s2-mark {
+        left: 820px;
+        top: 238px;
+        width: 34px;
+        height: 34px;
+        background: #a17c1f;
+        will-change: transform;
+      }
+      #s2-word {
+        left: 0;
+        right: 0;
+        top: 230px;
+        height: 180px;
+        text-align: center;
+        font-size: 132px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #111111;
+        will-change: transform, opacity;
+      }
+      #s2-tag {
+        left: 0;
+        right: 0;
+        top: 460px;
+        height: 90px;
+        text-align: center;
+        font-size: 52px;
+        font-weight: 600;
+        color: #1d1d1d;
+        will-change: transform, opacity;
+      }
+      #s2-tags {
+        display: flex;
+        justify-content: center;
+        gap: 36px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 640px;
+        height: 90px;
+      }
+      .tag {
+        padding: 20px 44px;
+        background: #b8f56a;
+        color: #1c5b28;
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-radius: 8px;
+        will-change: transform, opacity;
+        height: 66px;
+      }
+      #s2-glow {
+        left: 560px;
+        top: 190px;
+        width: 800px;
+        height: 640px;
+        background: radial-gradient(circle at center, rgba(168, 240, 82, 0.4), rgba(168, 240, 82, 0) 68%);
+      }
+
+      /* Scene 3 — the app flow */
+      #s3-card {
+        position: absolute;
+        left: 460px;
+        top: 170px;
+        width: 1000px;
+        height: 640px;
+        background: #ffffff;
+        border: 3px solid #d8d8d8;
+        will-change: transform, opacity;
+      }
+      #s3-card-inner {
+        position: absolute;
+        inset: 48px 64px 64px 64px;
+      }
+      .steps {
+        position: absolute;
+        top: 14px;
+        left: 0;
+        right: 0;
+        height: 96px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .step-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .step-col + .step-col {
+        margin-left: 120px;
+      }
+      .step-dot {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: 3px solid #999999;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333333;
+        font-size: 24px;
+        font-weight: 800;
+        will-change: transform, background-color;
+      }
+      .step-dot.active {
+        background: #0e9429;
+        border-color: #0e9429;
+        color: #ffffff;
+      }
+      .step-label {
+        font-size: 22px;
+        font-weight: 600;
+        color: #6b6b6b;
+      }
+      #s3-dz-title {
+        position: absolute;
+        top: 128px;
+        left: 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #111111;
+      }
+      #s3-dropzone {
+        position: absolute;
+        top: 172px;
+        left: 0;
+        width: 872px;
+        height: 128px;
+        border: 4px dashed #a7a7a7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        flex-direction: column;
+        will-change: transform, opacity;
+      }
+      #s3-dz-main {
+        font-size: 30px;
+        font-weight: 700;
+        color: #111111;
+      }
+      #s3-dz-sub {
+        font-size: 22px;
+        font-weight: 600;
+        color: #6b6b6b;
+      }
+      #s3-file {
+        position: absolute;
+        top: 172px;
+        left: 0;
+        width: 872px;
+        height: 128px;
+        border: 4px solid #0e9429;
+        background: #eafbe3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #s3-file-name {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0e5b1f;
+      }
+      #s3-file-badge {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+        background: #0e9429;
+        padding: 6px 16px;
+        border-radius: 6px;
+      }
+      #s3-jd-title {
+        position: absolute;
+        top: 330px;
+        left: 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #111111;
+      }
+      #s3-jd-box {
+        position: absolute;
+        top: 372px;
+        left: 0;
+        width: 872px;
+        height: 152px;
+        border: 3px solid #b4b4b4;
+        background: #ffffff;
+        padding: 22px 26px;
+        will-change: transform, opacity;
+      }
+      #s3-typed {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1d1d1d;
+        line-height: 1.5;
+      }
+      #s3-caret {
+        display: inline-block;
+        width: 3px;
+        height: 28px;
+        background: #0e9429;
+        vertical-align: text-bottom;
+        margin-left: 4px;
+      }
+      #s3-gen {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 200px;
+        height: 60px;
+        background: #b8f56a;
+        border: 3px solid #1c5b28;
+        color: #1c5b28;
+        font-size: 26px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, background-color;
+      }
+      #s3-gen-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      #s3-spinner {
+        width: 22px;
+        height: 22px;
+        border: 3px solid rgba(28, 91, 40, 0.35);
+        border-top-color: #1c5b28;
+        border-radius: 50%;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #s3-cur-dz-title {
+        position: absolute;
+        top: 306px;
+        left: 702px;
+        width: 516px;
+        height: 120px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #s3-glow {
+        left: 380px;
+        top: 100px;
+        width: 1160px;
+        height: 720px;
+        background: radial-gradient(circle at center, rgba(168, 240, 82, 0.2), rgba(168, 240, 82, 0) 70%);
+      }
+
+      /* Cursor + ripple */
+      #cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 46px;
+        height: 46px;
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .ring {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 4px solid #0e9429;
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      /* Scene 4 — result stack */
+      #s4-head {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 130px;
+        height: 100px;
+        text-align: center;
+        font-size: 58px;
+        font-weight: 800;
+        letter-spacing: -0.015em;
+        color: #111111;
+        will-change: transform, opacity;
+      }
+      #s4-sub {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 250px;
+        height: 60px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        color: #6b6b6b;
+        will-change: transform, opacity;
+      }
+      #s4-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 400px;
+        display: flex;
+        justify-content: center;
+        gap: 44px;
+      }
+      .result-card {
+        width: 480px;
+        height: 470px;
+        background: #ffffff;
+        border: 3px solid #d8d8d8;
+        padding: 40px 38px;
+        display: flex;
+        flex-direction: column;
+        will-change: transform, opacity;
+      }
+      .rc-kicker {
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #1c5b28;
+        margin-bottom: 26px;
+      }
+      .rc-chip {
+        align-self: flex-start;
+        margin-top: auto;
+        background: #b8f56a;
+        border: 2px solid #1c5b28;
+        color: #1c5b28;
+        font-size: 21px;
+        font-weight: 800;
+        padding: 10px 22px;
+        border-radius: 6px;
+      }
+      #c1 {
+        border-top: 14px solid #0e9429;
+      }
+      .c1-sheet {
+        width: 100%;
+        background: #ffffff;
+        border: 2px solid #333333;
+        color: #111111;
+        font-family: "EB Garamond", Georgia, serif;
+        padding: 22px 20px;
+      }
+      .c1-name {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-align: center;
+      }
+      .c1-role {
+        font-size: 18px;
+        font-style: italic;
+        text-align: center;
+        margin-top: 6px;
+        color: #222222;
+      }
+      .c1-bullet {
+        font-size: 15px;
+        line-height: 1.45;
+        margin-top: 12px;
+        color: #333333;
+      }
+      #c2 {
+        border-top: 14px solid #b8f56a;
+      }
+      #c3 {
+        border-top: 14px solid #0e9429;
+      }
+      .rc-line {
+        font-size: 30px;
+        font-weight: 700;
+        color: #1d1d1d;
+        line-height: 1.35;
+      }
+      .rc-line2 {
+        font-size: 25px;
+        font-weight: 600;
+        color: #6b6b6b;
+        line-height: 1.35;
+        margin-top: 14px;
+      }
+      #s4-glow {
+        right: -120px;
+        bottom: -240px;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle at center, rgba(168, 240, 82, 0.25), rgba(168, 240, 82, 0) 68%);
+      }
+
+      /* Scene 5 — outro */
+      #s5-mark {
+        left: 754px;
+        top: 300px;
+        width: 44px;
+        height: 44px;
+        background: #0e9429;
+        will-change: transform;
+      }
+      #s5-word {
+        left: 0;
+        right: 0;
+        top: 286px;
+        height: 200px;
+        text-align: center;
+        font-size: 138px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #111111;
+        will-change: transform, opacity;
+      }
+      #s5-tag {
+        left: 0;
+        right: 0;
+        top: 540px;
+        height: 90px;
+        text-align: center;
+        font-size: 46px;
+        font-weight: 600;
+        color: #1d1d1d;
+        will-change: transform, opacity;
+      }
+      #s5-badges {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 720px;
+        display: flex;
+        justify-content: center;
+        gap: 28px;
+        height: 70px;
+      }
+      #s5-glow {
+        left: 510px;
+        top: 220px;
+        width: 900px;
+        height: 620px;
+        background: radial-gradient(circle at center, rgba(168, 240, 82, 0.4), rgba(168, 240, 82, 0) 70%);
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-at0g" id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+      <!-- SCENE 1 — Hook (0.0–3.5s) -->
+      <div data-hf-id="hf-yihu" id="s1" class="scene">
+        <div data-hf-id="hf-4vls" id="s1-glow" class="fx-glow"></div>
+        <div data-hf-id="hf-yva5" id="s1-l1">Applying to 40 jobs?</div>
+        <div data-hf-id="hf-6tvv" id="s1-underline" class="rule"></div>
+        <div data-hf-id="hf-w0vr" id="s1-l2">And rewriting your resume 40 times?</div>
+        <div data-hf-id="hf-wc8r" id="s1-kicker">
+          Same resume. Same pain. Every single door.
+        </div>
+      </div>
+
+      <!-- SCENE 2 — Reveal (3.5–7.0s) -->
+      <div data-hf-id="hf-ukdt" id="s2" class="scene">
+        <div data-hf-id="hf-1111" id="s2-glow" class="fx-glow"></div>
+        <div data-hf-id="hf-q1si" id="s2-mark">.</div>
+        <div data-hf-id="hf-0qup" id="s2-word">fuck my resume</div>
+        <div data-hf-id="hf-24fw" id="s2-tag">Paste a JD. Get everything you need to apply.</div>
+        <div data-hf-id="hf-c7ds" id="s2-tags">
+          <div data-hf-id="hf-4an1" class="tag">Tailored Resume</div>
+          <div data-hf-id="hf-bbxe" class="tag">Cold Email</div>
+          <div data-hf-id="hf-9675" class="tag">Cold DM</div>
+        </div>
+      </div>
+
+      <!-- SCENE 3 — The flow (7.0–12.0s) -->
+      <div data-hf-id="hf-tsq0" id="s3" class="scene">
+        <div data-hf-id="hf-nlwu" id="s3-glow" class="fx-glow"></div>
+        <div data-hf-id="hf-xtu2" id="s3-card">
+          <div data-hf-id="hf-4wyx" id="s3-card-inner">
+            <div data-hf-id="hf-70xd" class="steps">
+              <div data-hf-id="hf-wisz" class="step-col">
+                <div data-hf-id="hf-415n" id="stp1" class="step-dot active">1</div>
+                <span data-hf-id="hf-fup3" class="step-label">Upload</span>
+              </div>
+              <div data-hf-id="hf-mv83" class="step-col">
+                <div data-hf-id="hf-2k8d" id="stp2" class="step-dot">2</div>
+                <span data-hf-id="hf-sh1t" class="step-label">Paste JD</span>
+              </div>
+              <div data-hf-id="hf-mgx2" class="step-col">
+                <div data-hf-id="hf-opqt" id="stp3" class="step-dot">3</div>
+                <span data-hf-id="hf-iyph" class="step-label">Generate</span>
+              </div>
+            </div>
+            <div data-hf-id="hf-lj7u" id="s3-dz-title">STEP 1 · Upload your resume</div>
+            <div data-hf-id="hf-b731" id="s3-dropzone">
+              <div data-hf-id="hf-hfm3" id="s3-dz-main">Upload your resume</div>
+              <div data-hf-id="hf-4q3q" id="s3-dz-sub">PDF up to 5MB · one upload, reused forever</div>
+            </div>
+            <div data-hf-id="hf-hwle" id="s3-file">
+              <span data-hf-id="hf-956c" id="s3-file-name">Subhraneel_Resume.pdf</span>
+              <span data-hf-id="hf-fsat" id="s3-file-badge">✓ READY</span>
+            </div>
+            <div data-hf-id="hf-cqzb" id="s3-jd-title">STEP 2 · Paste the job description</div>
+            <div data-hf-id="hf-qs3m" id="s3-jd-box">
+              <span data-hf-id="hf-pwnn" id="s3-typed"></span><span data-hf-id="hf-9xu2" id="s3-caret"></span>
+            </div>
+            <div data-hf-id="hf-970u" id="s3-gen">
+              <span data-hf-id="hf-hnxr" id="s3-gen-label">Generate</span>
+              <span data-hf-id="hf-yqxw" id="s3-spinner"></span>
+            </div>
+          </div>
+        </div>
+        <div data-hf-id="hf-8gdj" id="cursor">
+          <svg data-hf-id="hf-wmhy" width="46" height="46" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path data-hf-id="hf-wz93" d="M4 2 L20 10 L11.5 12.5 L8 20 Z" fill="#111111" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div data-hf-id="hf-osy2" id="ring-dz" class="ring" style="left:888px;top:244px"></div>
+        <div data-hf-id="hf-8ysf" id="ring-gen" class="ring" style="left:1288px;top:686px"></div>
+      </div>
+
+      <!-- SCENE 4 — Result stack (12.0–17.0s) -->
+      <div data-hf-id="hf-pulz" id="s4" class="scene">
+        <div data-hf-id="hf-fcor" id="s4-glow" class="fx-glow"></div>
+        <div data-hf-id="hf-re45" id="s4-head" data-layout-allow-overlap="">Here's everything you need.</div>
+        <div data-hf-id="hf-13nh" id="s4-sub">Paste once. Apply everywhere.</div>
+        <div data-hf-id="hf-8bb3" id="s4-row">
+          <div data-hf-id="hf-sqks" id="c1" class="result-card">
+            <div data-hf-id="hf-8j26" class="rc-kicker">Tailored Resume</div>
+            <div data-hf-id="hf-1bsm" class="c1-sheet">
+              <div data-hf-id="hf-bkq3" class="c1-name">AYSHA VERMA</div>
+              <div data-hf-id="hf-m47d" class="c1-role">Software Engineer</div>
+              <div data-hf-id="hf-vvwt" class="c1-bullet">• 4 yrs: GenAI pipelines in production, LLM infra, eval tooling.</div>
+              <div data-hf-id="hf-kobx" class="c1-bullet">• Rewrote for this JD: every bullet hammers AI + Python.</div>
+            </div>
+            <div data-hf-id="hf-1o91" class="rc-chip">⬇ Download PDF</div>
+          </div>
+          <div data-hf-id="hf-1egn" id="c2" class="result-card">
+            <div data-hf-id="hf-qs27" class="rc-kicker">Cold Email</div>
+            <div data-hf-id="hf-j5qj" class="rc-line">"Hiring for an AI Engineer? I've shipped exactly this twice."</div>
+            <div data-hf-id="hf-r3mb" class="rc-line2">~120 words. No corporate fluff</div>
+            <div data-hf-id="hf-0x8s" class="rc-chip">⧉ Copy</div>
+          </div>
+          <div data-hf-id="hf-xgcm" id="c3" class="result-card">
+            <div data-hf-id="hf-vmpe" class="rc-kicker">Cold DM</div>
+            <div data-hf-id="hf-9d8u" class="rc-line">"Built the same system at Z. Three jobs in one afternoon."</div>
+            <div data-hf-id="hf-2j43" class="rc-line2">~300 chars. No "hope you're doing well."</div>
+            <div data-hf-id="hf-afl0" class="rc-chip">⧉ Copy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 5 — Outro (17.0–20.0s) -->
+      <div data-hf-id="hf-lwhy" id="s5" class="scene">
+        <div data-hf-id="hf-oe5g" id="s5-glow" class="fx-glow"></div>
+        <div data-hf-id="hf-le2p" id="s5-mark"></div>
+        <div data-hf-id="hf-ekqo" id="s5-word">fuck my resume</div>
+        <div data-hf-id="hf-047p" id="s5-tag">You bring the key. Apply &amp; move on.</div>
+        <div data-hf-id="hf-osxe" id="s5-badges">
+          <div data-hf-id="hf-mzqs" class="tag">Bring Your Own Key</div>
+          <div data-hf-id="hf-u1d2" class="tag">Resume + Email + DM</div>
+        </div>
+      </div>
+
+      <!-- AUDIO -->
+      <audio data-hf-id="hf-ki7q" id="bg-music" data-start="0" data-duration="20" data-track-index="10" data-volume="0.35" src="assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3"></audio>
+      <audio data-hf-id="hf-peif" id="sfx-bong1" data-start="3.6" data-duration="0.13" data-track-index="11" data-volume="0.7" src="assets/sfx/interface/bong_001.ogg"></audio>
+      <audio data-hf-id="hf-bxc0" id="sfx-drops" data-start="5.1" data-duration="0.11" data-track-index="12" data-volume="0.6" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio data-hf-id="hf-tabt" id="sfx-click-dz" data-start="7.95" data-duration="0.02" data-track-index="13" data-volume="0.7" src="assets/sfx/interface/click_003.ogg"></audio>
+      <audio data-hf-id="hf-7aqn" id="sfx-file" data-start="8.35" data-duration="0.2" data-track-index="14" data-volume="0.6" src="assets/sfx/interface/drop_002.ogg"></audio>
+      <audio data-hf-id="hf-okjh" id="sfx-step2" data-start="8.5" data-duration="0.61" data-track-index="15" data-volume="0.55" src="assets/sfx/interface/switch_002.ogg"></audio>
+      <audio data-hf-id="hf-vh5f" id="sfx-keys" data-start="9.2" data-duration="0.25" data-track-index="16" data-volume="0.35" src="assets/sfx/keyboard/keypress-004.wav"></audio>
+      <audio data-hf-id="hf-40mg" id="sfx-step3" data-start="10.82" data-duration="0.61" data-track-index="17" data-volume="0.55" src="assets/sfx/interface/switch_002.ogg"></audio>
+      <audio data-hf-id="hf-m6pg" id="sfx-click-gen" data-start="11.4" data-duration="0.1" data-track-index="18" data-volume="0.7" src="assets/sfx/interface/click_001.ogg"></audio>
+      <audio data-hf-id="hf-erqd" id="sfx-cards" data-start="12.5" data-duration="0.12" data-track-index="19" data-volume="0.7" src="assets/sfx/impact/impactSoft_medium_000.ogg"></audio>
+      <audio data-hf-id="hf-8t99" id="sfx-bell" data-start="17.05" data-duration="1" data-track-index="20" data-volume="0.85" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+    </div>
+
+    <script>
+      gsap.registerPlugin(TextPlugin);
+
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      /* ---- Audio-reactive driver (subtle) ---- */
+      var AUDIO_DATA = null;
+      if (window.__hyperframes && window.__hyperframes.readText) {
+        try {
+          AUDIO_DATA = JSON.parse(window.__hyperframes.readText("assets/audio-data.json"));
+        } catch (e) {
+          AUDIO_DATA = null;
+        }
+      }
+      if (!AUDIO_DATA) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "assets/audio-data.json", false);
+        xhr.send();
+        AUDIO_DATA = JSON.parse(xhr.responseText);
+      }
+      var glows = Array.prototype.slice.call(document.querySelectorAll(".fx-glow"));
+      var markEl = document.getElementById("s5-mark");
+      var glowBase = [0.5, 0.36, 0.34, 0.22, 0.4];
+      var frameCount = Math.min(600, AUDIO_DATA.totalFrames || 600);
+      for (var f = 0; f < frameCount; f++) {
+        (function (frame) {
+          tl.call(
+            function () {
+              var rms = frame.rms || 0;
+              var bass = frame.bands ? frame.bands[0] : 0;
+              for (var i = 0; i < glows.length; i++) {
+                glows[i].style.opacity = String(Math.min(1, glowBase[i] + bass * 0.18 + rms * 0.1).toFixed(3));
+              }
+              if (markEl) {
+                markEl.style.transform = "scale(" + (1 + bass * 0.06).toFixed(3) + ")";
+              }
+            },
+            [],
+            f / 30
+          );
+        })(AUDIO_DATA.frames[f] || AUDIO_DATA.frames[0]);
+      }
+
+      /* ---- Scene 1 (0.0 – 3.5) ---- */
+      tl.fromTo("#s1-l1", { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.25);
+      tl.fromTo("#s1-underline", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 0.4);
+      tl.fromTo("#s1-l2", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 1.9);
+      tl.fromTo("#s1-kicker", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 2.5);
+
+      /* ---- Transition 1: hook -> reveal (3.5) ---- */
+      tl.to("#s1", { opacity: 0, y: 40, filter: "blur(6px)", duration: 0.35, ease: "power2.in" }, 3.5);
+      tl.fromTo(
+        "#s2",
+        { opacity: 0, y: 48, filter: "blur(9px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power3.out" },
+        3.5
+      );
+
+      /* ---- Scene 2 (3.5 – 7.0) ---- */
+      // beat-locked: wordmark lands on strongCue 17? no — S2 wordmark is a paced reveal; S5 locks to 17.02.
+      tl.fromTo("#s2-word", { scale: 0.9, y: 44, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 3.65);
+      tl.fromTo("#s2-mark", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" }, 3.7);
+      tl.fromTo("#s2-tag", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" }, 4.45);
+      // beat-grid: tags snap near beats 5.03 / 5.53 / 6.03
+      tl.fromTo("#s2-tags .tag:nth-child(1)", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.38, ease: "power2.out" }, 4.95);
+      tl.fromTo("#s2-tags .tag:nth-child(2)", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.38, ease: "power2.out" }, 5.45);
+      tl.fromTo("#s2-tags .tag:nth-child(3)", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.38, ease: "power2.out" }, 5.95);
+
+      /* ---- Transition 2: reveal -> flow (7.0) ---- */
+      tl.to("#s2", { opacity: 0, y: -50, filter: "blur(8px)", duration: 0.4, ease: "power2.in" }, 7.0);
+      tl.fromTo(
+        "#s3",
+        { opacity: 0, y: 60, filter: "blur(10px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power3.out" },
+        7.0
+      );
+
+      /* ---- Scene 3 (7.0 – 12.0) ---- */
+      tl.fromTo("#s3-card", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 7.1);
+      tl.fromTo("#s3-dropzone", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 7.25);
+      tl.fromTo("#s3-jd-box", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 7.45);
+      tl.fromTo("#s3-gen", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 7.6);
+
+      /* cursor: appear + move to dropzone (target ~960,285 rings at 888,244) */
+      tl.fromTo("#cursor", { x: 430, y: 110, opacity: 0 }, { opacity: 1, duration: 0.25 }, 7.55);
+      tl.to("#cursor", { x: 866, y: 239, duration: 0.5, ease: "power3.out" }, 7.6);
+      /* click dropzone: press + ripple */
+      tl.to("#cursor", { scale: 0.82, duration: 0.09, ease: "power2.in", yoyo: true, repeat: 1 }, 7.95);
+      tl.fromTo("#ring-dz", { scale: 0, opacity: 1 }, { scale: 3, opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 7.97);
+      /* file chip pops, placeholder fades, step 2 fills */
+      tl.to("#s3-dropzone", { opacity: 0, duration: 0.14 }, 8.35);
+      tl.fromTo("#s3-file", { scale: 0.85, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" }, 8.35);
+      tl.to("#stp2", { backgroundColor: "#0e9429", borderColor: "#0e9429", color: "#ffffff", duration: 0.2 }, 8.5);
+      tl.fromTo("#stp2", { scale: 0.82 }, { scale: 1, duration: 0.3, ease: "power2.out" }, 8.5);
+      /* cursor to JD box */
+      tl.to("#cursor", { x: 866, y: 430, duration: 0.42, ease: "power3.out" }, 8.75);
+      /* JD types in (TextPlugin), step 3 fills, generate click */
+      tl.to("#s3-typed", { text: { value: "Senior AI Engineer — Python · LLMs · 5+ yrs in prod. Own eval infra." }, duration: 1.5, ease: "none" }, 9.15);
+      tl.to("#s3-caret", { opacity: 0, duration: 0.05, repeat: 7, yoyo: true }, 9.2);
+      tl.to("#stp3", { backgroundColor: "#0e9429", borderColor: "#0e9429", color: "#ffffff", duration: 0.2 }, 10.82);
+      tl.fromTo("#stp3", { scale: 0.82 }, { scale: 1, duration: 0.3, ease: "power2.out" }, 10.82);
+      tl.to("#cursor", { x: 1288, y: 640, duration: 0.42, ease: "power3.out" }, 10.95);
+      tl.to("#cursor", { scale: 0.82, duration: 0.09, ease: "power2.in", yoyo: true, repeat: 1 }, 11.4);
+      tl.fromTo("#ring-gen", { scale: 0, opacity: 1 }, { scale: 3, opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 11.42);
+      tl.to("#s3-gen", { backgroundColor: "#0e9429", color: "#ffffff", duration: 0.18 }, 11.45);
+      tl.to("#s3-gen-label", { opacity: 0, duration: 0.12 }, 11.5);
+      tl.to("#s3-spinner", { opacity: 1, rotation: 360, duration: 0.45, ease: "power1.inOut" }, 11.55);
+
+      /* ---- Transition 3: flow -> result (12.0) ---- */
+      tl.to("#s3", { opacity: 0, scale: 1.03, filter: "blur(5px)", duration: 0.3, ease: "power2.in" }, 12.0);
+      tl.fromTo(
+        "#s4",
+        { opacity: 0, y: 24, scale: 0.97, filter: "blur(6px)" },
+        { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" },
+        12.0
+      );
+
+      /* ---- Scene 4 (12.0 – 17.0) ---- */
+      tl.fromTo("#s4-head", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 12.15);
+      tl.fromTo("#s4-sub", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 12.4);
+      // beat-grid: cards snap near beats 12.52 / 13.51 / 14.52
+      tl.fromTo("#c1", { scale: 0.8, y: 40, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 12.5);
+      tl.fromTo("#c2", { scale: 0.8, y: 40, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 13.5);
+      tl.fromTo("#c3", { scale: 0.8, y: 40, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 14.5);
+
+      /* ---- Transition 4: result -> outro (17.0) ---- */
+      tl.to("#s4", { opacity: 0, y: -30, filter: "blur(14px)", duration: 0.5, ease: "power2.in" }, 17.0);
+      tl.fromTo(
+        "#s5",
+        { opacity: 0, y: 40, filter: "blur(12px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power2.out" },
+        17.0
+      );
+
+      /* ---- Scene 5 (17.0 – 20.0) ---- */
+      // beat-locked: wordmark lands on strongCue 17.02 (happy-beats-vol-1)
+      tl.fromTo("#s5-word", { scale: 0.86, y: 34, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 17.08);
+      tl.fromTo("#s5-mark", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" }, 17.2);
+      tl.fromTo("#s5-tag", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" }, 17.7);
+      tl.fromTo("#s5-badges .tag:nth-child(1)", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" }, 18.3);
+      tl.fromTo("#s5-badges .tag:nth-child(2)", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" }, 18.7);
+      /* music fade + final scene fade to white (final scene exit allowed) */
+      tl.to("#bg-music", { volume: 0, duration: 1.1, ease: "power1.out" }, 18.7);
+      tl.to("#s5", { opacity: 0, duration: 0.8, ease: "power1.out" }, 19.1);
+
+      /* ---- persistent ambient rhythm (keeps timeline alive across holds) ---- */
+      tl.fromTo(".fx-glow", { scale: 0.97 }, { scale: 1.04, duration: 2.4, ease: "sine.inOut", yoyo: true, repeat: 8 }, 0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

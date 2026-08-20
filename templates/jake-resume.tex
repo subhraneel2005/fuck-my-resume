@@ -18,11 +18,15 @@
 \usepackage{fancyhdr}
 \usepackage[english]{babel}
 \usepackage{tabularx}
-\usepackage{fontawesome5}
+\usepackage[normalem]{ulem}
+\usepackage{iftex}
 \usepackage{multicol}
 \setlength{\multicolsep}{-3.0pt}
 \setlength{\columnsep}{-1pt}
+\ifPDFTeX
 \input{glyphtounicode}
+\pdfgentounicode=1
+\fi
 
 
 %----------FONT OPTIONS----------
@@ -62,7 +66,9 @@
 }{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
 
 % Ensure that generate pdf is machine readable/ATS parsable
+\ifPDFTeX
 \pdfgentounicode=1
+\fi
 
 %-------------------------
 % Custom commands
@@ -125,9 +131,9 @@
 \begin{center}
     {\Huge \scshape First Last} \\ \vspace{1pt}
     123 Street Name, Town, State 12345 \\ \vspace{1pt}
-    \small \raisebox{-0.1\height}\faPhone\ 123-456-7890 ~ \href{mailto:x@gmail.com}{\raisebox{-0.2\height}\faEnvelope\  \underline{email@gmail.com}} ~ 
-    \href{https://linkedin.com/in//}{\raisebox{-0.2\height}\faLinkedin\ \underline{linkedin.com/in/username}}  ~
-    \href{https://github.com/}{\raisebox{-0.2\height}\faGithub\ \underline{github.com/username}}
+    \small \raisebox{-0.1\height}\Telefon\ 123-456-7890 ~ \href{mailto:x@gmail.com}{\raisebox{-0.2\height}\Letter\  \uline{email@gmail.com}} ~
+    \href{https://linkedin.com/in//}{\uline{linkedin.com/in/username}}  ~
+    \href{https://github.com/}{\uline{github.com/username}}
     \vspace{-8pt}
 \end{center}
 
@@ -184,7 +190,7 @@
     \resumeItemListEnd
     
   \resumeSubHeadingListEnd
-\vspace{-16pt}
+\vspace{-6pt}
 
 %-----------PROJECTS-----------
 \section{Projects}
@@ -198,7 +204,7 @@
             \resumeItem{Created a Linux virtual machine to run on Google Cloud so that the program is able to run everyday from the cloud.}
             \resumeItem{Used Cron to schedule the program to execute automatically at 11 AM every morning so a reservation is made for me.}
           \resumeItemListEnd
-          \vspace{-13pt}
+          \vspace{-7pt}
       \resumeProjectHeading
           {\textbf{Ticket Price Calculator App} $|$ \emph{Java, Android Studio}}{November 2020}
           \resumeItemListStart
@@ -206,7 +212,7 @@
             \resumeItem{Processed user inputted information in the back-end of the app to return a subtotal price based on the tickets selected.}
             \resumeItem{Utilized the layout editor to create a UI for the application in order to allow different scenes to interact with each other.}
           \resumeItemListEnd 
-          \vspace{-13pt}
+          \vspace{-7pt}
           \resumeProjectHeading
           {\textbf{Transaction Management GUI} $|$ \emph{Java, Eclipse, JavaFX}}{October 2020}
           \resumeItemListStart
@@ -215,7 +221,7 @@
             \resumeItem{Implemented object-oriented programming practices such as inheritance to create different account types and databases.}
           \resumeItemListEnd 
     \resumeSubHeadingListEnd
-\vspace{-15pt}
+\vspace{3pt}
 
 
 %

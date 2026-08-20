@@ -19,7 +19,7 @@ export function JDInputStep({ value, onChange }: JDInputStep) {
       </div>
       <Textarea
         placeholder="Paste the full job description here..."
-        className="min-h-[160px]"
+        className="h-[160px] resize-none overflow-y-auto"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
