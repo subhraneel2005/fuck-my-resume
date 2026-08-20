@@ -8,13 +8,19 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { FaDownload, FaCopy, FaCheck, FaSpinner } from "react-icons/fa"
 import { ResumePreview } from "@/components/resume-preview"
 import type { Resume } from "@/lib/schemas/resume"
+import type { Highlights } from "@/lib/highlights"
 
 interface LaTeXPreviewProps {
   latexCode: string
   resumeData: Resume
+  highlights?: Highlights | null
 }
 
-export function LaTeXPreview({ latexCode, resumeData }: LaTeXPreviewProps) {
+export function LaTeXPreview({
+  latexCode,
+  resumeData,
+  highlights,
+}: LaTeXPreviewProps) {
   const [copied, setCopied] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -90,7 +96,7 @@ export function LaTeXPreview({ latexCode, resumeData }: LaTeXPreviewProps) {
           </TabsList>
           <TabsContent value="preview">
             <div className="rounded-md border overflow-auto max-h-[700px]">
-              <ResumePreview resume={resumeData} />
+              <ResumePreview resume={resumeData} highlights={highlights} />
             </div>
           </TabsContent>
           <TabsContent value="code">

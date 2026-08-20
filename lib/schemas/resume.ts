@@ -62,6 +62,31 @@ export const resumeSchema = z.object({
   leadership: z.array(leadershipSchema),
 });
 
+// AI-change annotation: which bullets/content the LLM created or rewrote. The
+// bullet strings are copied verbatim from the final resume so they can be
+// matched back to exact indexes instead of relying on fragile counts.
+export const aiChangesSchema = z.object({
+  addedBullets: z.array(
+    z.object({
+      section: z.enum(["experience", "projects", "leadership"]),
+      bullets: z.array(z.string()),
+    })
+  ),
+  tailoredBullets: z.array(
+    z.object({
+      section: z.enum(["experience", "projects", "leadership"]),
+      bullets: z.array(z.string()),
+    })
+  ),
+  addedSkills: z.array(z.string()),
+  addedCoursework: z.array(z.string()),
+});
+
+export const parseResultSchema = z.object({
+  resume: resumeSchema,
+  aiChanges: aiChangesSchema,
+});
+
 // Type exports
 export type Contact = z.infer<typeof contactSchema>;
 export type Education = z.infer<typeof educationSchema>;
@@ -70,3 +95,5 @@ export type Project = z.infer<typeof projectSchema>;
 export type TechnicalSkills = z.infer<typeof technicalSkillsSchema>;
 export type Leadership = z.infer<typeof leadershipSchema>;
 export type Resume = z.infer<typeof resumeSchema>;
+export type AiChanges = z.infer<typeof aiChangesSchema>;
+export type ParseResult = z.infer<typeof parseResultSchema>;

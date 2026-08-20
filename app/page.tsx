@@ -26,6 +26,7 @@ import { extractTextFromPDF, extractContactLinksFromPDF } from "@/lib/pdf-parser
 import { generateLatex } from "@/lib/latex-renderer"
 import { renderColdEmail, renderColdDM } from "@/lib/template-renderer"
 import type { Resume } from "@/lib/schemas/resume"
+import type { Highlights } from "@/lib/highlights"
 import type { ColdEmail, ColdDM } from "@/lib/schemas/outreach"
 
 const steps = [1, 2, 3]
@@ -38,6 +39,7 @@ export default function Page() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [latexCode, setLatexCode] = useState<string | null>(null)
   const [resumeData, setResumeData] = useState<Resume | null>(null)
+  const [highlights, setHighlights] = useState<Highlights | null>(null)
   const [coldEmail, setColdEmail] = useState<string | null>(null)
   const [coldDM, setColdDM] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +80,7 @@ export default function Page() {
         throw new Error(data.error || "Failed to parse resume")
       }
 
-      const { resume } = await response.json()
+      const { resume, highlights } = await response.json()
 
       // The PDF's real hyperlink targets (link annotations) may differ from the
       // displayed text; use them so the tailored resume links to the true URL.
@@ -92,6 +94,7 @@ export default function Page() {
       }
 
       setResumeData(resume)
+      setHighlights(highlights || null)
 
       // Step 3: Generate LaTeX
       const latex = generateLatex(resume)
@@ -147,6 +150,7 @@ export default function Page() {
     setLatexCode(null)
     setColdEmail(null)
     setColdDM(null)
+    setHighlights(null)
   }, [])
 
   // Result view
@@ -158,6 +162,7 @@ export default function Page() {
           <LaTeXPreview
             latexCode={latexCode}
             resumeData={resumeData}
+            highlights={highlights}
           />
           {coldEmail && coldDM && (
             <OutreachPreview email={coldEmail} dm={coldDM} />

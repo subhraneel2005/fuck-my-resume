@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseResumeWithLLM } from "@/lib/llm";
+import { buildHighlights } from "@/lib/highlights";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,12 +14,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const resume = await parseResumeWithLLM(
+    const { resume, aiChanges } = await parseResumeWithLLM(
       resumeText,
       jobDescription || undefined
     );
 
-    return NextResponse.json({ resume });
+    const highlights = buildHighlights(
+      aiChanges,
+      resume,
+      resumeText,
+      jobDescription || undefined
+    );
+
+    return NextResponse.json({ resume, aiChanges, highlights });
   } catch (error) {
     console.error("Parse resume error:", error);
     return NextResponse.json(

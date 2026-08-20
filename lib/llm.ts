@@ -1,7 +1,7 @@
 import { generateText, Output } from "ai";
 // import { openai } from "@ai-sdk/openai";
 import { google } from '@ai-sdk/google';
-import { resumeSchema, type Resume } from "@/lib/schemas/resume";
+import { parseResultSchema, type ParseResult } from "@/lib/schemas/resume";
 
 const SYSTEM_PROMPT = `You are an expert resume parser and ATS optimizer. Extract information from the provided resume text, structure it as JSON, and ENHANCE it to be comprehensive, detailed, and ATS-friendly.
 
@@ -27,6 +27,14 @@ ENHANCEMENT STRATEGY - DO THIS:
 8. For relevant coursework, include 6-8 courses if mentioned
 9. BOLDING: In every bullet point, wrap the 1-3 most impactful words or short phrases in double asterisks (** **) - e.g. metrics ("**by 40%**", "**50K+ daily requests**"), key technologies ("**Python**", "**TensorFlow**"), or standout outcomes ("**Reduced**", "**Scaled to 100K users**"). Bold ONLY genuinely important words, never whole sentences, never verbs that appear in every bullet, and at most 1-3 bolded phrases per bullet. For projects, bold the project name only if it is a well-known project.
 
+AI-CHANGE ANNOTATION (the "aiChanges" part of your output):
+After building the resume, report exactly what you created or altered so the UI can highlight it.
+- addedBullets: for each section (experience/projects/leadership) and entry, list the FULL VERBATIM text of every bullet you created that has NO counterpart in the original resume text. Copy the strings exactly as they appear in your resume (including any **bold** markers). Empty list if none.
+- tailoredBullets: for each section and entry, list the FULL VERBATIM text of every bullet that was already in the original resume but you substantially expanded or rewrote (do NOT list bullets you left essentially unchanged). Copy verbatim from your resume, including **bold** markers. Empty list if none.
+- addedSkills: skills labels that were not mentioned anywhere in the original resume text and were not part of the job description (if provided). Give the short label, e.g. "Kubernetes", not a full sentence. Empty list if none.
+- addedCoursework: course names you added that were not in the original resume. Empty list if none.
+- IMPORTANT: never fabricate entries in aiChanges; if nothing was added or rewritten, use empty arrays. Always copy bullet text from your own resume output so the strings match character-for-character.
+
 OUTPUT VOLUME (these are MINIMUMS, produce MORE if the source content supports it):
 - Each experience: 5-6 substantial bullet points
 - Each project: 4-5 substantial bullet points  
@@ -39,7 +47,7 @@ const ai_model = google('gemini-3.5-flash');
 export async function parseResumeWithLLM(
   resumeText: string,
   jobDescription?: string
-): Promise<Resume> {
+): Promise<ParseResult> {
   const userMessage = jobDescription
     ? `RESUME TEXT:\n\n${resumeText}\n\n---\nJOB DESCRIPTION (for keyword tailoring ONLY - do NOT add new entries):\n\n${jobDescription}`
     : `RESUME TEXT:\n\n${resumeText}`;
@@ -48,7 +56,7 @@ export async function parseResumeWithLLM(
     model: ai_model,
     instructions: SYSTEM_PROMPT,
     prompt: userMessage,
-    output: Output.object({ schema: resumeSchema }),
+    output: Output.object({ schema: parseResultSchema }),
   });
 
   return output;
