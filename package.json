@@ -26,6 +26,7 @@
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
+    "geist": "^1.7.2",
     "html2canvas-pro": "^2.3.9",
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",
