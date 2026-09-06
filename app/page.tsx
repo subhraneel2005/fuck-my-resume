@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useUser } from "@clerk/nextjs"
+import { authClient } from "@/lib/auth-client"
 import { FiCheck } from "react-icons/fi"
 import { FaSpinner } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,8 @@ import type { ColdEmail, ColdDM } from "@/lib/schemas/outreach"
 const steps = [1, 2, 3]
 
 export default function Page() {
-  const { isSignedIn } = useUser()
+  const { data: session } = authClient.useSession()
+  const isSignedIn = !!session
   const [currentStep, setCurrentStep] = useState(1)
   const [jd, setJd] = useState("")
   const [resumeFile, setResumeFile] = useState<File | null>(null)
