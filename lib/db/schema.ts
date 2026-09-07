@@ -58,11 +58,27 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ─── BYOK: AI Provider Settings ───
+
+export const aiSettings = pgTable("ai_settings", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" })
+    .unique(),
+  provider: text("provider").notNull(), // 'openai' | 'google'
+  apiKey: text("api_key").notNull(), // encrypted
+  model: text("model"), // optional: 'gpt-4o', 'gemini-3.5-flash', etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ─── Relations ───
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  aiSettings: many(aiSettings),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -75,6 +91,13 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
+    references: [user.id],
+  }),
+}));
+
+export const aiSettingsRelations = relations(aiSettings, ({ one }) => ({
+  user: one(user, {
+    fields: [aiSettings.userId],
     references: [user.id],
   }),
 }));

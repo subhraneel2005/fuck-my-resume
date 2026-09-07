@@ -1,9 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { aiSettings } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { decrypt } from "@/lib/encryption";
 import { generateOutreach } from "@/lib/outreach-generator";
 import type { Resume } from "@/lib/schemas/resume";
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify session
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Look up user's AI provider settings
+    const settings = await db.query.aiSettings.findFirst({
+      where: eq(aiSettings.userId, session.user.id),
+    });
+
+    if (!settings) {
+      return NextResponse.json(
+        {
+          error: "AI provider not configured",
+          redirect: "/settings",
+        },
+        { status: 403 }
+      );
+    }
+
+    const apiKey = decrypt(settings.apiKey);
+
     const { resume, jobDescription } = await request.json();
 
     if (!resume || !jobDescription) {
@@ -13,7 +44,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const outreach = await generateOutreach(resume as Resume, jobDescription);
+    const outreach = await generateOutreach(
+      resume as Resume,
+      jobDescription,
+      settings.provider as "openai" | "google",
+      apiKey
+    );
 
     return NextResponse.json({ outreach });
   } catch (error) {

@@ -1,6 +1,5 @@
 import { generateText, Output } from "ai";
-// import { openai } from "@ai-sdk/openai";
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { parseResultSchema, type ParseResult } from "@/lib/schemas/resume";
 
 const SYSTEM_PROMPT = `You are an expert resume parser and ATS optimizer. Extract information from the provided resume text, structure it as JSON, and ENHANCE it to be comprehensive, detailed, and ATS-friendly.
@@ -42,18 +41,27 @@ OUTPUT VOLUME (these are MINIMUMS, produce MORE if the source content supports i
 - Education: preserve all details
 - Contact: preserve all details, use empty string "" for missing fields`;
 
-const ai_model = google('gemini-3.5-flash');
+function getModel(userApiKey?: string) {
+  if (userApiKey) {
+    const google = createGoogleGenerativeAI({ apiKey: userApiKey });
+    return google("gemini-3.5-flash");
+  }
+  // Use server-side key from env
+  const google = createGoogleGenerativeAI();
+  return google("gemini-3.5-flash");
+}
 
 export async function parseResumeWithLLM(
   resumeText: string,
-  jobDescription?: string
+  jobDescription?: string,
+  userApiKey?: string
 ): Promise<ParseResult> {
   const userMessage = jobDescription
     ? `RESUME TEXT:\n\n${resumeText}\n\n---\nJOB DESCRIPTION (for keyword tailoring ONLY - do NOT add new entries):\n\n${jobDescription}`
     : `RESUME TEXT:\n\n${resumeText}`;
 
   const { output } = await generateText({
-    model: ai_model,
+    model: getModel(userApiKey),
     instructions: SYSTEM_PROMPT,
     prompt: userMessage,
     output: Output.object({ schema: parseResultSchema }),
