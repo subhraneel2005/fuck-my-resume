@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Call02Icon } from "@/components/ui/call-02";
 import { PauseIcon } from "@/components/ui/pause";
-import { RefreshIcon } from "@/components/ui/refresh";
+import { Persona, type PersonaState } from "@/components/ai-elements/persona";
 import {
   createRecorder,
   stopRecorder,
@@ -88,14 +88,12 @@ export default function InterviewSessionPage() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modelStage, setModelStage] = useState("");
-  const [modelProgress, setModelProgress] = useState(0);
 
   const recorderRef = useRef<RecorderState | null>(null);
   const messagesRef = useRef<InterviewMessage[]>([]);
   const statusRef = useRef<Status>("loading");
   const startTimeRef = useRef<number | null>(null);
   const totalRef = useRef(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
   const pendingTextRef = useRef<string | null>(null);
 
@@ -165,10 +163,6 @@ export default function InterviewSessionPage() {
   }, [interview, session]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
     if (status === "completed") return;
     if (startTimeRef.current === null) {
       setRemaining(totalRef.current);
@@ -218,9 +212,8 @@ export default function InterviewSessionPage() {
         if (engine === "browser") {
           const { speakWithKokoro } = await import("@/lib/interview-browser-voice");
           const voice = settings?.ttsVoice || "am_michael";
-          await speakWithKokoro(text, voice, (stage, loaded, total) => {
+          await speakWithKokoro(text, voice, (stage) => {
             setModelStage(stage === "ready" ? "Synthesizing audio..." : `Downloading voice model... ${stage}`);
-            setModelProgress(total > 0 ? loaded / total : 0);
           });
         } else {
           const res = await fetch("/api/interview/tts", {
@@ -326,9 +319,8 @@ export default function InterviewSessionPage() {
 
       if (engine === "browser") {
         const { transcribeWithWhisper } = await import("@/lib/interview-browser-voice");
-        text = await transcribeWithWhisper(pcm, (stage, loaded, total) => {
+        text = await transcribeWithWhisper(pcm, (stage) => {
           setModelStage(stage === "ready" ? "Transcribing..." : `Downloading speech model... ${stage}`);
-          setModelProgress(total > 0 ? loaded / total : 0);
         });
       } else {
         const wav = encodeWav(pcm, 16000);
@@ -449,6 +441,32 @@ export default function InterviewSessionPage() {
 
   const percent = remaining / totalRef.current;
 
+  // The animated persona mirrors the interviewer's conversational state.
+  const personaState: PersonaState =
+    status === "assistant"
+      ? "speaking"
+      : status === "processing"
+        ? "thinking"
+        : status === "starting" || status === "ready"
+          ? "thinking"
+          : status === "listening" || status === "recording"
+            ? "listening"
+            : "idle";
+
+  const personaHint =
+    status === "waiting-gesture" ? null :
+    status === "starting" || status === "ready"
+      ? "The interviewer is introducing themselves and asking your first question..."
+      : status === "listening"
+        ? "Listening — hold to talk."
+        : status === "recording"
+          ? "Recording..."
+          : status === "processing"
+            ? modelStage || "Transcribing..."
+            : status === "assistant"
+              ? modelStage || "Interviewer is speaking..."
+              : null;
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -491,54 +509,24 @@ export default function InterviewSessionPage() {
               </CardContent>
             </Card>
 
-            <div className="flex-1 overflow-y-auto rounded-lg border bg-muted/20 p-4">
-              {status === "waiting-gesture" ? (
-                <div className="flex h-full flex-col items-center justify-center gap-4 py-12 text-center">
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    {VOICE_ENGINES[engine]?.label ?? engine} needs a tap to play
-                    audio. Tap below to hear the interviewer.
-                  </p>
-                  <Button onClick={resumeSpeech}>
-                    <Call02Icon size={14} className="mr-2 shrink-0" /> Tap to hear
-                  </Button>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-4 py-12 text-center">
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    The interviewer is introducing themselves and asking your
-                    first question based on the job description...
-                  </p>
-                  {status === "starting" && (
-                    <RefreshIcon size={16} className="animate-spin text-muted-foreground" />
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((msg, i) => (
-                    <MessageBubble key={i} msg={msg} />
-                  ))}
-                  <div ref={scrollRef} />
-                </div>
-              )}
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-lg border bg-muted/20 p-6">
+              <Persona state={personaState} className="size-44" />
 
-              {((status as string) === "processing" ||
-                (status as string) === "assistant" ||
-                modelProgress > 0) && (
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <RefreshIcon size={12} className="animate-spin" />
-                  <span>
-                    {modelStage || ((status as string) === "processing" ? "Transcribing..." : "Interviewer is speaking...")}
-                  </span>
-                </div>
-              )}
-
-              {["starting", "listening", "recording"].includes(status) && (
-                <div className="mt-4 text-xs text-muted-foreground">
-                  {status === "starting" && "Interviewer is preparing..."}
-                  {status === "listening" && "Listening — hold to talk."}
-                  {status === "recording" && "Recording..."}
-                </div>
-              )}
+              <div className="flex min-h-8 items-center justify-center text-center text-sm text-muted-foreground">
+                {personaHint ??
+                  (status === "waiting-gesture" ? (
+                    <span className="flex flex-col items-center gap-3">
+                      <span>
+                        {VOICE_ENGINES[engine]?.label ?? engine} needs a tap to
+                        play audio. Tap below to hear the interviewer.
+                      </span>
+                      <Button size="sm" onClick={resumeSpeech}>
+                        <Call02Icon size={14} className="mr-2 shrink-0" /> Tap to
+                        hear
+                      </Button>
+                    </span>
+                  ) : null)}
+              </div>
             </div>
 
             {["listening", "recording", "processing", "assistant"].includes(status) && (
@@ -572,22 +560,6 @@ export default function InterviewSessionPage() {
 
         {error && <p className="mt-4 text-center text-sm text-destructive">{error}</p>}
       </main>
-    </div>
-  );
-}
-
-function MessageBubble({ msg }: { msg: InterviewMessage }) {
-  return (
-    <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
-          msg.role === "user"
-            ? "bg-primary text-primary-foreground"
-            : "border bg-background"
-        }`}
-      >
-        {msg.content}
-      </div>
     </div>
   );
 }
