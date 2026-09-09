@@ -15,6 +15,13 @@
       "when": 1788817155312,
       "tag": "0001_red_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788967744810,
+      "tag": "0002_green_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

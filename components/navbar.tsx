@@ -16,9 +16,14 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-background/80 px-6 py-3 backdrop-blur-sm">
       <Link href={"/"}>
-      <span className="text-sm font-semibold">fuck this resume</span></Link>
+      <span className="text-primary font-bold tracking-tighter text-sm">fuckmyresume.lol</span></Link>
       {session ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Link href="/interview">
+            <Button variant="outline" size="sm">
+              Mock Interview
+            </Button>
+          </Link>
           <Button
             variant="default"
             size="sm"

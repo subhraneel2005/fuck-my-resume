@@ -5,6 +5,13 @@ import { aiSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { encrypt, decrypt, maskApiKey } from "@/lib/encryption";
 import { randomUUID } from "crypto";
+import {
+  enginesForProvider,
+  engineConfig,
+  DEFAULT_BRAIN_MODEL,
+  type Provider,
+  type VoiceEngine,
+} from "@/lib/interview-models";
 
 async function getSession(request: NextRequest) {
   return auth.api.getSession({
@@ -33,6 +40,11 @@ export async function GET(request: NextRequest) {
       provider: settings.provider,
       model: settings.model,
       apiKeyMasked: maskApiKey(decrypt(settings.apiKey)),
+      voiceEngine: settings.voiceEngine,
+      interviewerModel: settings.interviewerModel,
+      sttModel: settings.sttModel,
+      ttsModel: settings.ttsModel,
+      ttsVoice: settings.ttsVoice,
       createdAt: settings.createdAt,
       updatedAt: settings.updatedAt,
     },
@@ -47,52 +59,114 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { provider, apiKey, model } = body;
+  const {
+    provider,
+    apiKey,
+    model,
+    voiceEngine,
+    interviewerModel,
+    sttModel,
+    ttsModel,
+    ttsVoice,
+  } = body;
 
-  if (!provider || !apiKey) {
+  const existing = await db.query.aiSettings.findFirst({
+    where: eq(aiSettings.userId, session.user.id),
+  });
+
+  if (!provider && !existing) {
     return NextResponse.json(
       { error: "provider and apiKey are required" },
       { status: 400 }
     );
   }
 
-  if (provider !== "openai" && provider !== "google") {
+  const resolvedProvider: Provider = provider || (existing!.provider as Provider);
+
+  if (resolvedProvider !== "openai" && resolvedProvider !== "google") {
     return NextResponse.json(
       { error: "provider must be 'openai' or 'google'" },
       { status: 400 }
     );
   }
 
-  const encryptedKey = encrypt(apiKey);
+  // Keep existing key when not re-entered (matches "leave blank to keep current")
+  let resolvedApiKey: string | undefined;
+  if (apiKey && typeof apiKey === "string" && apiKey.trim()) {
+    resolvedApiKey = apiKey;
+  } else if (existing) {
+    resolvedApiKey = decrypt(existing.apiKey);
+  }
 
-  // Check if settings already exist for this user
-  const existing = await db.query.aiSettings.findFirst({
-    where: eq(aiSettings.userId, session.user.id),
-  });
+  if (!resolvedApiKey) {
+    return NextResponse.json(
+      { error: "provider and apiKey are required" },
+      { status: 400 }
+    );
+  }
+
+  // Validate voice engine against the provider (Google can only use browser voice).
+  let resolvedVoiceEngine: VoiceEngine | null =
+    voiceEngine && voiceEngine !== "auto" ? (voiceEngine as VoiceEngine) : null;
+
+  if (resolvedVoiceEngine && !enginesForProvider(resolvedProvider).includes(resolvedVoiceEngine)) {
+    return NextResponse.json(
+      { error: `Voice engine '${resolvedVoiceEngine}' is not available for provider '${resolvedProvider}'` },
+      { status: 400 }
+    );
+  }
+
+  const defaultEngine = enginesForProvider(resolvedProvider)[0] ?? "browser";
+  const effectiveEngine: VoiceEngine = resolvedVoiceEngine || defaultEngine;
+  const voiceConfig = engineConfig(effectiveEngine);
+
+  const resolvedInterviewerModel =
+    interviewerModel || existing?.interviewerModel || DEFAULT_BRAIN_MODEL[resolvedProvider];
+
+  // Only persist STT/TTS model + voice values that are valid for the selected
+  // engine. Stale values from a previously-selected engine (e.g. kokoro models
+  // after switching OpenAI→free voice) get replaced with the engine defaults.
+  const validStt = (v: string | null | undefined) =>
+    typeof v === "string" && voiceConfig.sttModels.some((m) => m.id === v);
+  const validTts = (v: string | null | undefined) =>
+    typeof v === "string" && voiceConfig.ttsModels.some((m) => m.id === v);
+  const validVoice = (v: string | null | undefined) =>
+    typeof v === "string" && voiceConfig.voices.some((m) => m.id === v);
+
+  const candidateStt = sttModel ?? existing?.sttModel;
+  const candidateTts = ttsModel ?? existing?.ttsModel;
+  const candidateVoice = ttsVoice ?? existing?.ttsVoice;
+
+  const resolvedSttModel = validStt(candidateStt) ? candidateStt! : voiceConfig.defaultSttModel;
+  const resolvedTtsModel = validTts(candidateTts) ? candidateTts! : voiceConfig.defaultTtsModel;
+  const resolvedTtsVoice = validVoice(candidateVoice) ? candidateVoice! : voiceConfig.defaultVoice;
+
+  const values = {
+    provider: resolvedProvider,
+    apiKey: encrypt(resolvedApiKey),
+    model: typeof model === "string" && model.trim() ? model : null,
+    voiceEngine: effectiveEngine,
+    interviewerModel: resolvedInterviewerModel,
+    sttModel: resolvedSttModel,
+    ttsModel: resolvedTtsModel,
+    ttsVoice: resolvedTtsVoice,
+    updatedAt: new Date(),
+  };
 
   if (existing) {
-    // Update existing
     await db
       .update(aiSettings)
-      .set({
-        provider,
-        apiKey: encryptedKey,
-        model: model || null,
-        updatedAt: new Date(),
-      })
+      .set(values)
       .where(eq(aiSettings.userId, session.user.id));
   } else {
-    // Create new
     await db.insert(aiSettings).values({
       id: randomUUID(),
       userId: session.user.id,
-      provider,
-      apiKey: encryptedKey,
-      model: model || null,
+      ...values,
     });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, voiceEngine: effectiveEngine });
 }
 
 // DELETE — remove AI provider settings
