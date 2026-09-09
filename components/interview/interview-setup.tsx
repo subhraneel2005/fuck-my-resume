@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FaDice } from "react-icons/fa";
+import { MagicWand01Icon } from "@/components/ui/magic-wand-01";
+import { RefreshIcon } from "@/components/ui/refresh";
 import {
   INTERVIEW_DIFFICULTIES,
   INTERVIEW_DURATIONS,
@@ -127,7 +128,10 @@ export function InterviewSetup() {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-center text-muted-foreground">Loading...</p>
+          <p className="flex items-center justify-center gap-2 text-center text-muted-foreground">
+            <RefreshIcon size={16} className="animate-spin" />
+            Loading...
+          </p>
         </CardContent>
       </Card>
     );
@@ -273,7 +277,7 @@ export function InterviewSetup() {
               onClick={handleRandomize}
               title="Randomize seed"
             >
-              <FaDice />
+              <MagicWand01Icon size={16} className="shrink-0" />
             </Button>
           </div>
 

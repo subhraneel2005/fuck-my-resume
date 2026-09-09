@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FaDownload, FaCopy, FaCheck, FaSpinner } from "react-icons/fa"
+import { CloudDownloadIcon } from "@/components/ui/cloud-download"
+import { Copy01Icon } from "@/components/ui/copy-01"
+import { CircleCheckIcon } from "@/components/ui/circle-check"
+import { RefreshIcon } from "@/components/ui/refresh"
 import { ResumePreview } from "@/components/resume-preview"
 import type { Resume } from "@/lib/schemas/resume"
 import type { Highlights } from "@/lib/highlights"
@@ -68,17 +71,17 @@ export function LaTeXPreview({
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleCopy}>
             {copied ? (
-              <FaCheck className="mr-2 size-3" />
+              <CircleCheckIcon size={14} className="mr-2 shrink-0" />
             ) : (
-              <FaCopy className="mr-2 size-3" />
+              <Copy01Icon size={14} className="mr-2 shrink-0" />
             )}
             {copied ? "Copied!" : "Copy LaTeX"}
           </Button>
           <Button size="sm" onClick={handleDownloadPDF} disabled={isDownloading}>
             {isDownloading ? (
-              <FaSpinner className="mr-2 size-3 animate-spin" />
+              <RefreshIcon size={14} className="mr-2 shrink-0 animate-spin" />
             ) : (
-              <FaDownload className="mr-2 size-3" />
+              <CloudDownloadIcon size={14} className="mr-2 shrink-0" />
             )}
             {isDownloading ? "Compiling..." : "Download PDF"}
           </Button>

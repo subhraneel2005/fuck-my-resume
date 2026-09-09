@@ -2,9 +2,13 @@
 
 import { useState, useCallback } from "react"
 import { authClient } from "@/lib/auth-client"
-import { FiCheck } from "react-icons/fi"
-import { FaSpinner } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
+import { CircleCheckIcon } from "@/components/ui/circle-check"
+import { RefreshIcon } from "@/components/ui/refresh"
+import { ArrowLeft02Icon } from "@/components/ui/arrow-left-02"
+import { ArrowRight02Icon } from "@/components/ui/arrow-right-02"
+import { UndoIcon } from "@/components/ui/undo"
+import { CloudDownloadIcon } from "@/components/ui/cloud-download"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import {
   Stepper,
@@ -170,9 +174,11 @@ export default function Page() {
           )}
           <div className="flex justify-center gap-2">
             <Button variant="outline" onClick={handleBackToEdit}>
+              <UndoIcon size={14} className="mr-1.5 shrink-0" />
               Back to Edit
             </Button>
             <Button variant="outline" onClick={handleDownloadTeX}>
+              <CloudDownloadIcon size={14} className="mr-1.5 shrink-0" />
               Download .tex
             </Button>
           </div>
@@ -196,7 +202,7 @@ export default function Page() {
                 <StepperTrigger>
                   <StepperIndicator>
                     {effectiveStep > step ? (
-                      <FiCheck className="size-4" />
+                      <CircleCheckIcon size={16} className="shrink-0" />
                     ) : (
                       step
                     )}
@@ -233,6 +239,7 @@ export default function Page() {
               onClick={() => setCurrentStep((s) => s - 1)}
               disabled={effectiveStep <= 1 || isProcessing}
             >
+              <ArrowLeft02Icon size={14} className="mr-1.5 shrink-0" />
               Back
             </Button>
             {effectiveStep < 3 ? (
@@ -241,6 +248,7 @@ export default function Page() {
                 disabled={effectiveStep >= 3}
               >
                 Next
+                <ArrowRight02Icon size={14} className="ml-1.5 shrink-0" />
               </Button>
             ) : (
               <Button
@@ -249,7 +257,7 @@ export default function Page() {
               >
                 {isProcessing ? (
                   <>
-                    <FaSpinner className="mr-2 size-3 animate-spin" />
+                    <RefreshIcon size={14} className="mr-2 animate-spin" />
                     Processing...
                   </>
                 ) : (

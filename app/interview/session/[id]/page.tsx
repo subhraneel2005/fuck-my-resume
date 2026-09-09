@@ -11,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FaMicrophone, FaStop, FaSpinner } from "react-icons/fa";
+import { Call02Icon } from "@/components/ui/call-02";
+import { PauseIcon } from "@/components/ui/pause";
+import { RefreshIcon } from "@/components/ui/refresh";
 import {
   createRecorder,
   stopRecorder,
@@ -497,7 +499,7 @@ export default function InterviewSessionPage() {
                     audio. Tap below to hear the interviewer.
                   </p>
                   <Button onClick={resumeSpeech}>
-                    <FaMicrophone className="mr-2 size-3" /> Tap to hear
+                    <Call02Icon size={14} className="mr-2 shrink-0" /> Tap to hear
                   </Button>
                 </div>
               ) : messages.length === 0 ? (
@@ -507,7 +509,7 @@ export default function InterviewSessionPage() {
                     first question based on the job description...
                   </p>
                   {status === "starting" && (
-                    <FaSpinner className="size-4 animate-spin text-muted-foreground" />
+                    <RefreshIcon size={16} className="animate-spin text-muted-foreground" />
                   )}
                 </div>
               ) : (
@@ -523,7 +525,7 @@ export default function InterviewSessionPage() {
                 (status as string) === "assistant" ||
                 modelProgress > 0) && (
                 <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <FaSpinner className="size-3 animate-spin" />
+                  <RefreshIcon size={12} className="animate-spin" />
                   <span>
                     {modelStage || ((status as string) === "processing" ? "Transcribing..." : "Interviewer is speaking...")}
                   </span>
@@ -553,7 +555,7 @@ export default function InterviewSessionPage() {
                       : "bg-primary hover:bg-primary/90 disabled:opacity-50"
                   }`}
                 >
-                  {status === "recording" ? <FaStop className="size-6" /> : <FaMicrophone className="size-6" />}
+                  {status === "recording" ? <PauseIcon size={26} className="shrink-0" /> : <Call02Icon size={28} className="shrink-0" />}
                 </button>
                 <Button
                   variant="outline"

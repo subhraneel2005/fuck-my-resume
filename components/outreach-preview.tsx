@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { FaCopy, FaCheck, FaEnvelope, FaLinkedin } from "react-icons/fa"
+import { FaLinkedin } from "react-icons/fa"
+import { Mail01Icon } from "@/components/ui/mail-01"
+import { Copy01Icon } from "@/components/ui/copy-01"
+import { CircleCheckIcon } from "@/components/ui/circle-check"
 
 interface OutreachPreviewProps {
   email: string
@@ -30,7 +33,7 @@ export function OutreachPreview({ email, dm }: OutreachPreviewProps) {
         <Tabs defaultValue="email">
           <TabsList className="w-full">
             <TabsTrigger value="email" className="flex-1">
-              <FaEnvelope className="mr-2 size-3" />
+              <Mail01Icon size={14} className="mr-2 shrink-0" />
               Cold Email
             </TabsTrigger>
             <TabsTrigger value="dm" className="flex-1">
@@ -47,9 +50,9 @@ export function OutreachPreview({ email, dm }: OutreachPreviewProps) {
                   onClick={() => handleCopy(email, "email")}
                 >
                   {copiedField === "email" ? (
-                    <FaCheck className="mr-2 size-3" />
+                    <CircleCheckIcon size={14} className="mr-2 shrink-0" />
                   ) : (
-                    <FaCopy className="mr-2 size-3" />
+                    <Copy01Icon size={14} className="mr-2 shrink-0" />
                   )}
                   {copiedField === "email" ? "Copied!" : "Copy"}
                 </Button>
@@ -70,9 +73,9 @@ export function OutreachPreview({ email, dm }: OutreachPreviewProps) {
                   onClick={() => handleCopy(dm, "dm")}
                 >
                   {copiedField === "dm" ? (
-                    <FaCheck className="mr-2 size-3" />
+                    <CircleCheckIcon size={14} className="mr-2 shrink-0" />
                   ) : (
-                    <FaCopy className="mr-2 size-3" />
+                    <Copy01Icon size={14} className="mr-2 shrink-0" />
                   )}
                   {copiedField === "dm" ? "Copied!" : "Copy"}
                 </Button>

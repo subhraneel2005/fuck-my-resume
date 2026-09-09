@@ -5,6 +5,8 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RefreshIcon } from "@/components/ui/refresh";
+import { Delete02Icon } from "@/components/ui/delete-02";
 import {
   Card,
   CardContent,
@@ -179,7 +181,10 @@ export function AiProviderForm() {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-center text-muted-foreground">Loading...</p>
+          <p className="flex items-center justify-center gap-2 text-center text-muted-foreground">
+            <RefreshIcon size={16} className="animate-spin" />
+            Loading...
+          </p>
         </CardContent>
       </Card>
     );
@@ -227,6 +232,7 @@ export function AiProviderForm() {
                   onClick={handleDelete}
                   disabled={saving}
                 >
+                  <Delete02Icon size={14} className="mr-1.5 shrink-0" />
                   Remove
                 </Button>
               </div>
