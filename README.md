@@ -1,6 +1,6 @@
-![Fuck My Resume Banner](public/Fuck%20my%20Resume%20Banner.png)
-
-# Fuck My Resume 💀📄
+<p align="center">
+  <img src="public/Fuck%20my%20Resume%20Banner.png" alt="Fuck My Resume Banner" width="100%" />
+</p>
 
 Tired of your resume gathering dust? **Fuck My Resume** turns a boring PDF into a fresh, job-tailored resume — then helps you land the gig with cold outreach and a live AI mock interview. This app runs **100% on your own API keys** — bring your own, delete your data, no subscription wall.
 
