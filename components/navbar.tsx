@@ -1,15 +1,42 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { MagicWand01Icon } from "@/components/ui/magic-wand-01";
 import { Robot01Icon } from "@/components/ui/robot-01";
 import { Settings01Icon } from "@/components/ui/settings-01";
 import { Login01Icon } from "@/components/ui/login-01";
 import { Logout01Icon } from "@/components/ui/logout-01";
 import { DashboardSquare01Icon } from "@/components/ui/dashboard-square-01";
+import { Sun03Icon } from "@/components/ui/sun-03";
+import { Moon02Icon } from "@/components/ui/moon-02";
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label="Toggle theme"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    >
+      {mounted && resolvedTheme === "dark" ? (
+        <Sun03Icon size={16} />
+      ) : (
+        <Moon02Icon size={16} />
+      )}
+    </Button>
+  );
+}
 
 export function Navbar() {
   const { data: session } = authClient.useSession();
@@ -20,10 +47,17 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-background/80 px-6 py-3 backdrop-blur-sm">
-      <Link href={"/"} className="flex items-center gap-1.5">
-        <MagicWand01Icon size={16} className="shrink-0 text-primary" />
-        <span className="text-primary font-bold tracking-tighter text-sm">fuckmyresume</span></Link>
+      <Link href={"/"} className="flex items-center">
+        <Image
+          src="/applogo.png"
+          alt="fuckmyresume.lol"
+          width={32}
+          height={32}
+          className="size-8 shrink-0"
+        />
+      </Link>
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         <Link href="/leaderboard">
           <Button variant="ghost" size="sm">
             <DashboardSquare01Icon size={14} className="mr-1.5 shrink-0" />
@@ -39,7 +73,7 @@ export function Navbar() {
             </Button>
           </Link>
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={() => (window.location.href = "/settings")}
           >

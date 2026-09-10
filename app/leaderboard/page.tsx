@@ -64,8 +64,8 @@ return (
       <main className="mx-auto max-w-2xl px-6 pt-24 pb-16">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-              <DashboardSquare01Icon size={24} className="text-primary" />
+            <h1 className="flex items-center gap-2 text-2xl leading-tighter font-bold tracking-tight">
+              <DashboardSquare01Icon size={24} className="text-foreground" />
               Hall of Fame
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ const medal =
                       className="rounded-full"
                     />
                   ) : (
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-foreground">
                       {initials(entry.name)}
                     </div>
                   )}
@@ -176,7 +176,7 @@ const medal =
                   </div>
 
                   <div className="text-right">
-                    <p className="text-lg font-bold tabular-nums text-primary">
+                    <p className="text-lg font-bold tabular-nums text-foreground">
                       {entry.avgScore.toFixed(1)}
                       <span className="text-sm font-normal text-muted-foreground">
                         /10

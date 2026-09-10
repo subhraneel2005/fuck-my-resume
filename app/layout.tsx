@@ -10,7 +10,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="antialiased">
-      <body className={cn`${GeistSans.className} dark`}>
+      <body className={cn(GeistSans.className)}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

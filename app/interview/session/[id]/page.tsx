@@ -607,7 +607,7 @@ export default function InterviewSessionPage() {
                     className="size-56 rounded-full object-cover ring-4 ring-background"
                   />
                 ) : (
-                  <div className="flex size-56 items-center justify-center rounded-full bg-primary/15 text-6xl font-semibold text-primary ring-4 ring-background">
+                  <div className="flex size-56 items-center justify-center rounded-full bg-primary/15 text-6xl font-semibold text-foreground ring-4 ring-background">
                     {userInitial}
                   </div>
                 )}
@@ -793,7 +793,7 @@ function InterviewResults({
             <>
               <div className="flex items-start justify-between gap-4">
                 <section>
-                  <h3 className="mb-1 text-sm font-semibold">Summary</h3>
+                  <h3 className="mb-1 text-sm leading-tighter font-bold">Summary</h3>
                   <p className="text-sm text-muted-foreground">{feedback.summary}</p>
                 </section>
                 {feedback.score != null && feedback.score > 0 && (
@@ -801,7 +801,7 @@ function InterviewResults({
                     <div
                       className={`flex size-16 items-center justify-center rounded-full border-4 text-xl font-bold ${
                         feedback.score >= 8
-                          ? "border-primary text-primary"
+                          ? "border-primary text-foreground"
                           : feedback.score >= 5
                             ? "border-yellow-400 text-yellow-500"
                             : "border-red-400 text-red-500"
@@ -811,7 +811,7 @@ function InterviewResults({
                     </div>
                     <a
                       href="/leaderboard"
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-foreground hover:underline"
                     >
                       <DashboardSquare01Icon size={14} />
                       Leaderboard
@@ -820,19 +820,19 @@ function InterviewResults({
                 )}
               </div>
               <section>
-                <h3 className="mb-2 text-sm font-semibold">Strengths</h3>
+                <h3 className="mb-2 text-sm leading-tighter font-bold">Strengths</h3>
                 <ul className="list-inside list-disc space-y-1 text-sm">
                   {feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
                 </ul>
               </section>
               <section>
-                <h3 className="mb-2 text-sm font-semibold">Areas to improve</h3>
+                <h3 className="mb-2 text-sm leading-tighter font-bold">Areas to improve</h3>
                 <ul className="list-inside list-disc space-y-1 text-sm">
                   {feedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
                 </ul>
               </section>
               <section>
-                <h3 className="mb-2 text-sm font-semibold">Next steps</h3>
+                <h3 className="mb-2 text-sm leading-tighter font-bold">Next steps</h3>
                 <ul className="list-inside list-disc space-y-1 text-sm">
                   {feedback.suggestions.map((s, i) => <li key={i}>{s}</li>)}
                 </ul>

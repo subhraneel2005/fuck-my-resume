@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility leading-tighter {
+  line-height: 1.05;
+}
+
 :root {
   --background: oklch(0.9900 0 0);
   --foreground: oklch(0 0 0);
@@ -11,7 +15,7 @@
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.9900 0 0);
   --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0 0 0);
+  --primary: oklch(0.4143 0.2789 264.90);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.9400 0 0);
   --secondary-foreground: oklch(0 0 0);
@@ -23,7 +27,7 @@
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.9200 0 0);
   --input: oklch(0.9400 0 0);
-  --ring: oklch(0 0 0);
+  --ring: oklch(0.4143 0.2789 264.90);
   --chart-1: oklch(0.8100 0.1700 75.3500);
   --chart-2: oklch(0.5500 0.2200 264.5300);
   --chart-3: oklch(0.7200 0 0);
@@ -31,12 +35,12 @@
   --chart-5: oklch(0.5600 0 0);
   --sidebar: oklch(0.9900 0 0);
   --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
+  --sidebar-primary: oklch(0.4143 0.2789 264.90);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.9400 0 0);
   --sidebar-accent-foreground: oklch(0 0 0);
   --sidebar-border: oklch(0.9400 0 0);
-  --sidebar-ring: oklch(0 0 0);
+  --sidebar-ring: oklch(0.4143 0.2789 264.90);
   --font-sans: Geist, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Geist Mono, monospace;
@@ -66,8 +70,8 @@
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.1800 0 0);
   --popover-foreground: oklch(1 0 0);
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0 0 0);
+  --primary: oklch(0.4143 0.2789 264.90);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.2500 0 0);
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.2300 0 0);
@@ -78,7 +82,7 @@
   --destructive-foreground: oklch(0 0 0);
   --border: oklch(0.2600 0 0);
   --input: oklch(0.3200 0 0);
-  --ring: oklch(0.7200 0 0);
+  --ring: oklch(0.4143 0.2789 264.90);
   --chart-1: oklch(0.8100 0.1700 75.3500);
   --chart-2: oklch(0.5800 0.2100 260.8400);
   --chart-3: oklch(0.5600 0 0);
@@ -86,12 +90,12 @@
   --chart-5: oklch(0.9200 0 0);
   --sidebar: oklch(0.1800 0 0);
   --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0 0 0);
+  --sidebar-primary: oklch(0.4143 0.2789 264.90);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.3200 0 0);
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.3200 0 0);
-  --sidebar-ring: oklch(0.7200 0 0);
+  --sidebar-ring: oklch(0.4143 0.2789 264.90);
   --font-sans: Geist, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Geist Mono, monospace;

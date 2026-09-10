@@ -132,7 +132,7 @@ function StepperIndicator({
       className={cn(
         "flex size-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors",
         state === "active" &&
-          "border-primary bg-primary/10 text-primary",
+          "border-primary bg-primary/10 text-foreground",
         state === "completed" &&
           "border-primary bg-primary text-primary-foreground",
         state === "inactive" &&

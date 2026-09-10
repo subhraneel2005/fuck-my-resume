@@ -34,7 +34,7 @@ export function ResumeUploadStep({ onFileSelect }: ResumeUploadStep) {
       {fileName ? (
         <div className="flex flex-col items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
-            <File01Icon size={24} className="text-primary" />
+            <File01Icon size={24} className="text-foreground" />
           </div>
           <p className="text-sm font-medium">{fileName}</p>
           <Button

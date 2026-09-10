@@ -32,7 +32,7 @@ export default function SettingsPage() {
       <main className="flex flex-1 items-center justify-center p-4 pt-16">
         <div className="w-full max-w-lg space-y-6">
           <div>
-            <h1 className="text-2xl font-bold">Settings</h1>
+            <h1 className="text-2xl leading-tighter font-bold">Settings</h1>
             <p className="text-sm text-muted-foreground">
               Configure your AI provider API keys
             </p>

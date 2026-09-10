@@ -12,7 +12,7 @@ export default function SignInPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-sm space-y-4 p-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold">Sign in</h1>
+          <h1 className="text-2xl leading-tighter font-bold">Sign in</h1>
           <p className="text-sm text-muted-foreground">
             Continue with your Google account
           </p>
