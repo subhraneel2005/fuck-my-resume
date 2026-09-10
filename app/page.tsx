@@ -1,278 +1,68 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
-import { Button } from "@/components/ui/button"
-import { CircleCheckIcon } from "@/components/ui/circle-check"
-import { RefreshIcon } from "@/components/ui/refresh"
-import { ArrowLeft02Icon } from "@/components/ui/arrow-left-02"
-import { ArrowRight02Icon } from "@/components/ui/arrow-right-02"
-import { UndoIcon } from "@/components/ui/undo"
-import { CloudDownloadIcon } from "@/components/ui/cloud-download"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import {
-  Stepper,
-  StepperContent,
-  StepperIndicator,
-  StepperItem,
-  StepperNav,
-  StepperPanel,
-  StepperSeparator,
-  StepperTrigger,
-} from "@/components/reui/stepper"
 import { Navbar } from "@/components/navbar"
-import { AuthStep } from "@/components/steps/auth-step"
-import { ResumeUploadStep } from "@/components/steps/resume-upload-step"
-import { JDInputStep } from "@/components/steps/jd-input-step"
-import { LaTeXPreview } from "@/components/latex-preview"
-import { OutreachPreview } from "@/components/outreach-preview"
-import { extractTextFromPDF, extractContactLinksFromPDF } from "@/lib/pdf-parser"
-import { generateLatex } from "@/lib/latex-renderer"
-import { renderColdEmail, renderColdDM } from "@/lib/template-renderer"
-import type { Resume } from "@/lib/schemas/resume"
-import type { Highlights } from "@/lib/highlights"
-import type { ColdEmail, ColdDM } from "@/lib/schemas/outreach"
-
-const steps = [1, 2, 3]
+import { Button } from "@/components/ui/button"
 
 export default function Page() {
   const { data: session } = authClient.useSession()
-  const isSignedIn = !!session
-  const [currentStep, setCurrentStep] = useState(1)
-  const [jd, setJd] = useState("")
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [latexCode, setLatexCode] = useState<string | null>(null)
-  const [resumeData, setResumeData] = useState<Resume | null>(null)
-  const [highlights, setHighlights] = useState<Highlights | null>(null)
-  const [coldEmail, setColdEmail] = useState<string | null>(null)
-  const [coldDM, setColdDM] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
-  const effectiveStep = isSignedIn ? Math.max(currentStep, 2) : currentStep
-
-  const handleFileSelect = useCallback((file: File) => {
-    setResumeFile(file)
-    setError(null)
-  }, [])
-
-  const handleGenerate = useCallback(async () => {
-    if (!resumeFile) return
-
-    setIsProcessing(true)
-    setError(null)
-
-    try {
-      // Step 1: Extract text from PDF (client-side)
-      const resumeText = await extractTextFromPDF(resumeFile)
-
-      if (!resumeText.trim()) {
-        throw new Error("Could not extract text from PDF. Please try another file.")
-      }
-
-      // Step 2: Send to LLM for structured parsing
-      const response = await fetch("/api/parse-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText,
-          jobDescription: jd || undefined,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to parse resume")
-      }
-
-      const { resume, highlights } = await response.json()
-
-      // The PDF's real hyperlink targets (link annotations) may differ from the
-      // displayed text; use them so the tailored resume links to the true URL.
-      const pdfLinks = await extractContactLinksFromPDF(resumeFile)
-      if (pdfLinks.linkedin || pdfLinks.github) {
-        resume.contact = {
-          ...resume.contact,
-          linkedin: pdfLinks.linkedin || resume.contact.linkedin,
-          github: pdfLinks.github || resume.contact.github,
-        }
-      }
-
-      setResumeData(resume)
-      setHighlights(highlights || null)
-
-      // Step 3: Generate LaTeX
-      const latex = generateLatex(resume)
-      setLatexCode(latex)
-
-      // Step 4: Generate outreach (if JD provided)
-      if (jd.trim()) {
-        try {
-          const outreachResponse = await fetch("/api/generate-outreach", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ resume, jobDescription: jd }),
-          })
-
-          if (outreachResponse.ok) {
-            const { outreach } = await outreachResponse.json()
-            const emailData: ColdEmail = outreach.coldEmail
-            const dmData: ColdDM = outreach.coldDM
-            setColdEmail(renderColdEmail(emailData))
-            setColdDM(renderColdDM(dmData))
-          }
-        } catch {
-          // Outreach generation is optional, don't block resume
-          console.error("Outreach generation failed")
-        }
-      }
-
-      // Move to result view
-      setCurrentStep(4)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
-    } finally {
-      setIsProcessing(false)
+  useEffect(() => {
+    if (session) {
+      router.replace("/generate")
     }
-  }, [resumeFile, jd])
-
-  const handleDownloadTeX = useCallback(() => {
-    if (!latexCode) return
-
-    const blob = new Blob([latexCode], { type: "application/x-tex" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "resume.tex"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, [latexCode])
-
-  const handleBackToEdit = useCallback(() => {
-    setCurrentStep(3)
-    setLatexCode(null)
-    setColdEmail(null)
-    setColdDM(null)
-    setHighlights(null)
-  }, [])
-
-  // Result view
-  if (currentStep === 4 && latexCode && resumeData) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 pt-16">
-        <Navbar />
-        <div className="w-full max-w-3xl space-y-4">
-          <LaTeXPreview
-            latexCode={latexCode}
-            resumeData={resumeData}
-            highlights={highlights}
-          />
-          {coldEmail && coldDM && (
-            <OutreachPreview email={coldEmail} dm={coldDM} />
-          )}
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" onClick={handleBackToEdit}>
-              <UndoIcon size={14} className="mr-1.5 shrink-0" />
-              Back to Edit
-            </Button>
-            <Button variant="outline" onClick={handleDownloadTeX}>
-              <CloudDownloadIcon size={14} className="mr-1.5 shrink-0" />
-              Download .tex
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  }, [session, router])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 pt-16">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <Card className="w-full max-w-lg">
-        <Stepper
-          value={effectiveStep}
-          onValueChange={setCurrentStep}
-          className="space-y-6"
-        >
-          <StepperNav className="justify-center px-6 pt-6">
-            {steps.map((step) => (
-              <StepperItem key={step} step={step}>
-                <StepperTrigger>
-                  <StepperIndicator>
-                    {effectiveStep > step ? (
-                      <CircleCheckIcon size={16} className="shrink-0" />
-                    ) : (
-                      step
-                    )}
-                  </StepperIndicator>
-                </StepperTrigger>
-                {steps.length > step && <StepperSeparator />}
-              </StepperItem>
-            ))}
-          </StepperNav>
 
-          <StepperPanel>
-            <StepperContent value={1}>
-              <CardContent>
-                <AuthStep />
-              </CardContent>
-            </StepperContent>
+      <main className="flex flex-1 flex-col items-center justify-center px-6 pt-24 pb-16 text-center">
+        <Image
+          src="/applogo.png"
+          alt="fuckmyresume.lol"
+          width={64}
+          height={64}
+          className="mb-8 size-16 rounded-2xl"
+        />
 
-            <StepperContent value={2}>
-              <CardContent>
-                <ResumeUploadStep onFileSelect={handleFileSelect} />
-              </CardContent>
-            </StepperContent>
+        <h1 className="max-w-2xl text-5xl leading-tighter font-black tracking-tight sm:text-6xl lg:text-7xl">
+          Your resume is shit💩
+        </h1>
+        <p className="mt-4 max-w-lg text-lg text-muted-foreground leading-tighter">
+          We fix that. AI-tailored resumes, cold outreach drafts, and mock interviews — all in one place.
+        </p>
 
-            <StepperContent value={3}>
-              <CardContent>
-                <JDInputStep value={jd} onChange={setJd} />
-              </CardContent>
-            </StepperContent>
-          </StepperPanel>
+        <Link href="/generate" className="mt-10">
+          <Button size="lg" className="h-14 px-10 text-lg leading-tighter font-bold">
+            {session ? "Open the app" : "Get started — it's free"}
+          </Button>
+        </Link>
 
-          <CardFooter className="justify-between border-t px-6 py-4">
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentStep((s) => s - 1)}
-              disabled={effectiveStep <= 1 || isProcessing}
-            >
-              <ArrowLeft02Icon size={14} className="mr-1.5 shrink-0" />
-              Back
-            </Button>
-            {effectiveStep < 3 ? (
-              <Button
-                onClick={() => setCurrentStep((s) => s + 1)}
-                disabled={effectiveStep >= 3}
-              >
-                Next
-                <ArrowRight02Icon size={14} className="ml-1.5 shrink-0" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleGenerate}
-                disabled={!resumeFile || isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <RefreshIcon size={14} className="mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Generate"
-                )}
-              </Button>
-            )}
-          </CardFooter>
-        </Stepper>
-        {error && (
-          <div className="px-6 pb-4">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        )}
-      </Card>
+        <div className="mt-20 grid max-w-3xl gap-8 sm:grid-cols-3">
+          <Feature title="Resume Tailoring" desc="AI rewrites your resume to match any job description in seconds." />
+          <Feature title="Cold Outreach" desc="Auto-generated emails and LinkedIn DMs that actually get replies." />
+          <Feature title="Mock Interviews" desc="AI interviewer that scores you and tells you exactly where you suck." />
+        </div>
+
+        <p className="mt-16 text-xs text-muted-foreground">
+          BYOK — bring your own API key. Your data stays yours.
+        </p>
+      </main>
+    </div>
+  )
+}
+
+function Feature({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-base leading-tighter font-bold">{title}</h2>
+      <p className="text-sm text-muted-foreground">{desc}</p>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { Robot01Icon } from "@/components/ui/robot-01";
+import { File01Icon } from "@/components/ui/file-01";
 import { Settings01Icon } from "@/components/ui/settings-01";
 import { Login01Icon } from "@/components/ui/login-01";
 import { Logout01Icon } from "@/components/ui/logout-01";
@@ -62,6 +63,12 @@ export function Navbar() {
           <Button variant="ghost" size="sm">
             <DashboardSquare01Icon size={14} className="mr-1.5 shrink-0" />
             Leaderboard
+          </Button>
+        </Link>
+        <Link href="/generate">
+          <Button size="sm">
+            <File01Icon size={14} className="mr-1.5 shrink-0" />
+            Generate
           </Button>
         </Link>
         {session ? (

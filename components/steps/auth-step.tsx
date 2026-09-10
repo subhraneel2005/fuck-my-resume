@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function AuthStep() {
   const handleGoogleSignIn = () => {
-    authClient.signIn.social({ provider: "google" });
+    authClient.signIn.social({ provider: "google", callbackURL: "/generate" });
   };
 
   return (
