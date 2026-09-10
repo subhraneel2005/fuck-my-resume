@@ -4,8 +4,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { aiSettings, interviewSessions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { aiSettings, interviewSessions, user } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
 import { z } from "zod";
 import type { InterviewConfig } from "@/lib/interview-config";
@@ -15,6 +15,7 @@ const bodySchema = z.object({
 });
 
 const feedbackSchema = z.object({
+  score: z.number().int().min(1).max(10),
   summary: z.string(),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
@@ -58,15 +59,28 @@ export async function POST(
     ? await generateFeedback(settings, interview, transcriptMarkdown)
     : null;
 
+  const wasCompleted = interview.status === "completed";
+
   await db
     .update(interviewSessions)
     .set({
       status: "completed",
       transcriptMarkdown: transcriptMarkdown || null,
       feedback: feedback || null,
+      score: feedback?.score ?? null,
       updatedAt: new Date(),
     })
     .where(eq(interviewSessions.id, id));
+
+  if (!wasCompleted) {
+    await db
+      .update(user)
+      .set({
+        mockInterviewsCompleted: sql`${user.mockInterviewsCompleted} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, session.user.id));
+  }
 
   return NextResponse.json({ feedback });
 }
@@ -108,6 +122,7 @@ Interview difficulty: ${interview.difficulty} (tone: ${config.tone}).
 Length: ${interview.durationMinutes} minutes.
 
 Rules:
+- score: an integer from 1 to 10 rating overall performance (10 = exceptional, 1 = poor). Be honest and calibrate across candidates — a good but imperfect performance should land in the 6-8 range.
 - summary: 2-3 sentences on overall performance.
 - strengths: 3-6 concrete strengths shown in the interview.
 - weaknesses: 3-6 specific areas to improve, tied to the candidate's actual answers.

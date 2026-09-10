@@ -19,6 +19,7 @@ import {
   INTERVIEWER_BRAIN_MODELS,
   enginesForProvider,
   engineConfig,
+  resolveTtsVoice,
   INTERVIEW_NOT_SUPPORTED_BANNER,
   type Provider,
   type VoiceEngine,
@@ -388,7 +389,7 @@ export function AiProviderForm() {
             <Label htmlFor="ttsVoice">Voice</Label>
             <select
               id="ttsVoice"
-              value={ttsVoice || voiceCfg.defaultVoice}
+              value={resolveTtsVoice(effectiveEngine, ttsVoice)}
               onChange={(e) => setTtsVoice(e.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
             >

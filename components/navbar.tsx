@@ -9,6 +9,7 @@ import { Robot01Icon } from "@/components/ui/robot-01";
 import { Settings01Icon } from "@/components/ui/settings-01";
 import { Login01Icon } from "@/components/ui/login-01";
 import { Logout01Icon } from "@/components/ui/logout-01";
+import { DashboardSquare01Icon } from "@/components/ui/dashboard-square-01";
 
 export function Navbar() {
   const { data: session } = authClient.useSession();
@@ -22,7 +23,14 @@ export function Navbar() {
       <Link href={"/"} className="flex items-center gap-1.5">
         <MagicWand01Icon size={16} className="shrink-0 text-primary" />
         <span className="text-primary font-bold tracking-tighter text-sm">fuckmyresume.lol</span></Link>
-      {session ? (
+      <div className="flex items-center gap-2">
+        <Link href="/leaderboard">
+          <Button variant="ghost" size="sm">
+            <DashboardSquare01Icon size={14} className="mr-1.5 shrink-0" />
+            Leaderboard
+          </Button>
+        </Link>
+        {session ? (
         <div className="flex items-center gap-2">
           <Link href="/interview">
             <Button variant="outline" size="sm">
@@ -62,6 +70,7 @@ export function Navbar() {
           Sign In
         </Button>
       )}
+      </div>
     </nav>
   );
 }

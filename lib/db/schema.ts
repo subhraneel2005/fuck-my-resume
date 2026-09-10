@@ -16,6 +16,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
+  mockInterviewsCompleted: integer("mock_interviews_completed")
+    .notNull()
+    .default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -99,7 +102,8 @@ export const interviewSessions = pgTable("interview_sessions", {
   model: text("model").notNull(), // interviewer LLM (brain) used for this session
   status: text("status").notNull().default("active"), // 'active' | 'completed' | 'aborted'
   transcriptMarkdown: text("transcript_markdown"),
-  feedback: jsonb("feedback"), // { strengths, weaknesses, suggestions }
+  feedback: jsonb("feedback"), // { score, strengths, weaknesses, suggestions }
+  score: integer("score"), // final feedback score out of 10
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

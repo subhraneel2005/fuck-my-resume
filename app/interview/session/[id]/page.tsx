@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,16 @@ import {
 } from "@/components/ui/card";
 import { Call02Icon } from "@/components/ui/call-02";
 import { PauseIcon } from "@/components/ui/pause";
+import { Logout01Icon } from "@/components/ui/logout-01";
+import { DashboardSquare01Icon } from "@/components/ui/dashboard-square-01";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Persona, type PersonaState } from "@/components/ai-elements/persona";
 import {
   createRecorder,
@@ -23,7 +34,8 @@ import {
   playBase64Audio,
   type RecorderState,
 } from "@/lib/audio";
-import { VOICE_ENGINES } from "@/lib/interview-models";
+import { VOICE_ENGINES, resolveTtsVoice } from "@/lib/interview-models";
+import { loadBrowserKokoro, loadBrowserWhisper } from "@/lib/interview-browser-voice";
 import {
   generateInterviewConfig,
   buildInterviewMarkdown,
@@ -45,6 +57,7 @@ interface SessionInfo {
 }
 
 interface Feedback {
+  score?: number;
   summary: string;
   strengths: string[];
   weaknesses: string[];
@@ -63,6 +76,7 @@ type Status =
   | "completed";
 
 const STORAGE_PREFIX = "fmr:interview:";
+const GUIDE_KEY = `${STORAGE_PREFIX}guide-dismissed`;
 
 function secondsToClock(total: number): string {
   const m = Math.floor(total / 60);
@@ -88,6 +102,11 @@ export default function InterviewSessionPage() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modelStage, setModelStage] = useState("");
+  const [showCallGuide, setShowCallGuide] = useState(false);
+  const [downloads, setDownloads] = useState<{
+    voice?: { loaded: number; total: number };
+    stt?: { loaded: number; total: number };
+  } | null>(null);
 
   const recorderRef = useRef<RecorderState | null>(null);
   const messagesRef = useRef<InterviewMessage[]>([]);
@@ -152,6 +171,10 @@ export default function InterviewSessionPage() {
       // Fresh interview → "ready" triggers the automatic greeting. A resumed
       // interview goes straight to listening (no re-speaking).
       setStatus(resumed ? "listening" : "ready");
+
+      if (!resumed && localStorage.getItem(GUIDE_KEY) !== "1") {
+        setShowCallGuide(true);
+      }
     }
     void load();
   }, [id]);
@@ -211,7 +234,7 @@ export default function InterviewSessionPage() {
       try {
         if (engine === "browser") {
           const { speakWithKokoro } = await import("@/lib/interview-browser-voice");
-          const voice = settings?.ttsVoice || "am_michael";
+          const voice = resolveTtsVoice("browser", settings?.ttsVoice);
           await speakWithKokoro(text, voice, (stage) => {
             setModelStage(stage === "ready" ? "Synthesizing audio..." : `Downloading voice model... ${stage}`);
           });
@@ -223,7 +246,7 @@ export default function InterviewSessionPage() {
               sessionId: id,
               text,
               model: settings?.ttsModel || undefined,
-              voice: settings?.ttsVoice || undefined,
+              voice: resolveTtsVoice("openai", settings?.ttsVoice),
             }),
           });
           if (!res.ok) {
@@ -249,12 +272,30 @@ export default function InterviewSessionPage() {
   const startInterview = useCallback(async () => {
     setStatus("starting");
     setError(null);
+    setModelStage("");
+    setDownloads(engine === "browser" ? {} : null);
     try {
-      const res = await fetch("/api/interview/chat", {
+      // Greet via the brain while the browser voice models download in
+      // parallel — the interview clock only starts once both are ready.
+      const chatResPromise = fetch("/api/interview/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: id, messages: [] }),
       });
+
+      let modelsPromise: Promise<unknown> = Promise.resolve();
+      if (engine === "browser") {
+        modelsPromise = Promise.all([
+          loadBrowserKokoro((_stage, loaded, total) => {
+            setDownloads((d) => ({ ...(d ?? {}), voice: { loaded, total } }));
+          }).catch(() => {}),
+          loadBrowserWhisper((_stage, loaded, total) => {
+            setDownloads((d) => ({ ...(d ?? {}), stt: { loaded, total } }));
+          }).catch(() => {}),
+        ]);
+      }
+
+      const res = await chatResPromise;
       if (!res.ok) {
         const data = await res.json();
         if (data.redirect) {
@@ -270,6 +311,11 @@ export default function InterviewSessionPage() {
       const next = [...messagesRef.current, opening];
       setMessages(next);
       persist(next);
+
+      // Don't start the clock while models are still downloading.
+      await modelsPromise;
+      setDownloads(null);
+
       startTimeRef.current = Date.now();
       setStatus("assistant");
       const result = await speakText(opening.content);
@@ -278,9 +324,10 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      setDownloads(null);
       setStatus("ready");
     }
-  }, [id, persist, speakText]);
+  }, [id, persist, speakText, engine]);
 
   // Auto-begin: as soon as a fresh interview has loaded, the interviewer greets
   // the candidate via TTS (no separate "Begin Interview" press).
@@ -413,6 +460,33 @@ export default function InterviewSessionPage() {
     }
   }, [speakText]);
 
+  const dismissCallGuide = useCallback(() => {
+    setShowCallGuide(false);
+    localStorage.setItem(GUIDE_KEY, "1");
+  }, []);
+
+  // Push-to-talk: hold Space to record, release to submit — same as the mic.
+  useEffect(() => {
+    if (showCallGuide) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat || e.code !== "Space" || statusRef.current !== "listening")
+        return;
+      e.preventDefault();
+      void handlePressStart();
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || statusRef.current !== "recording") return;
+      e.preventDefault();
+      void handlePressEnd();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [handlePressStart, handlePressEnd, showCallGuide]);
+
   const completeInterview = useCallback(async () => {
     if (statusRef.current === "completed") return;
     setStatus("completed");
@@ -458,7 +532,7 @@ export default function InterviewSessionPage() {
     status === "starting" || status === "ready"
       ? "The interviewer is introducing themselves and asking your first question..."
       : status === "listening"
-        ? "Listening — hold to talk."
+        ? "Hold the mic button or press and hold Space to talk."
         : status === "recording"
           ? "Recording..."
           : status === "processing"
@@ -467,99 +541,216 @@ export default function InterviewSessionPage() {
               ? modelStage || "Interviewer is speaking..."
               : null;
 
+  const userName = session?.user?.name || "You";
+  const userInitial = (userName || "U").charAt(0).toUpperCase();
+  const isPersonaSpeaking = status === "assistant";
+  const isUserActive = status === "listening" || status === "recording";
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col p-4 pt-16">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-3 p-4 pt-16">
         {feedback ? (
           <InterviewResults feedback={feedback} transcript={buildInterviewMarkdown(messages)} config={config} />
         ) : (
           <>
-            <Card className="mb-4">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-lg">{config.title}</CardTitle>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {interview?.jobTitle && (
-                        <span className="font-medium text-foreground">{interview.jobTitle}</span>
-                      )}
-                      {interview?.company && ` at ${interview.company}`}
-                      {" · "}
-                      {VOICE_ENGINES[engine]?.label ?? engine}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-mono text-xl tabular-nums ${remaining <= 30 ? "text-destructive" : ""}`}>
-                      {secondsToClock(remaining)}
-                    </p>
-                    <div className="mt-1 h-1.5 w-28 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.max(0, Math.min(1, percent)) * 100}%` }}
-                      />
-                    </div>
-                  </div>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={completeInterview}
+                disabled={status === "assistant"}
+              >
+                <Logout01Icon size={14} className="mr-1.5 shrink-0" />
+                End Interview
+              </Button>
+
+              <div className="min-w-0 text-center">
+                <p className="truncate text-sm font-semibold">{config.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {interview?.jobTitle && (
+                    <span className="font-medium text-foreground">{interview.jobTitle}</span>
+                  )}
+                  {interview?.company && ` at ${interview.company}`}
+                  {" · "}
+                  {VOICE_ENGINES[engine]?.label ?? engine}
+                  {" · "}
+                  <span className="capitalize">{interview?.difficulty}</span>
+                </p>
+              </div>
+
+              <div className="flex flex-col items-end gap-1">
+                <p className={`font-mono text-lg tabular-nums ${remaining <= 30 ? "text-destructive" : ""}`}>
+                  {secondsToClock(remaining)}
+                </p>
+                <div className="h-1 w-20 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.max(0, Math.min(1, percent)) * 100}%` }}
+                  />
                 </div>
-              </CardHeader>
-              <CardContent className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-full border px-2 py-0.5 capitalize">{interview?.difficulty}</span>
-                <span className="rounded-full border px-2 py-0.5 font-mono">seed: {interview?.seed}</span>
-                <span>focus: {config.focusAreas.join(", ")}</span>
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-lg border bg-muted/20 p-6">
-              <Persona state={personaState} className="size-44" />
-
-              <div className="flex min-h-8 items-center justify-center text-center text-sm text-muted-foreground">
-                {personaHint ??
-                  (status === "waiting-gesture" ? (
-                    <span className="flex flex-col items-center gap-3">
-                      <span>
-                        {VOICE_ENGINES[engine]?.label ?? engine} needs a tap to
-                        play audio. Tap below to hear the interviewer.
-                      </span>
-                      <Button size="sm" onClick={resumeSpeech}>
-                        <Call02Icon size={14} className="mr-2 shrink-0" /> Tap to
-                        hear
-                      </Button>
-                    </span>
-                  ) : null)}
               </div>
             </div>
 
-            {["listening", "recording", "processing", "assistant"].includes(status) && (
-              <div className="mt-4 flex items-center justify-center gap-4">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+              <div
+                className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border bg-muted/30 p-6 transition-shadow ${
+                  isUserActive ? "ring-2 ring-primary" : ""
+                }`}
+              >
+                {session?.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={userName}
+                    width={224}
+                    height={224}
+                    className="size-56 rounded-full object-cover ring-4 ring-background"
+                  />
+                ) : (
+                  <div className="flex size-56 items-center justify-center rounded-full bg-primary/15 text-6xl font-semibold text-primary ring-4 ring-background">
+                    {userInitial}
+                  </div>
+                )}
+                <div className="text-center">
+                  <p className="text-sm font-medium">{userName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {status === "recording"
+                      ? "Speaking..."
+                      : status === "listening"
+                        ? "Listening..."
+                        : "You"}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border bg-muted/30 p-6 transition-shadow ${
+                  isPersonaSpeaking ? "ring-2 ring-primary" : ""
+                }`}
+              >
+                <Persona state={personaState} className="size-56" />
+                <div className="text-center">
+                  <p className="text-sm font-medium">AI Interviewer</p>
+                  <p className="text-xs text-muted-foreground">
+                    {status === "assistant"
+                      ? "Speaking..."
+                      : status === "processing"
+                        ? "Thinking..."
+                        : "Idle"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {status === "waiting-gesture" && (
+              <div className="flex flex-col items-center gap-3 pb-2">
+                <p className="text-sm text-muted-foreground">
+                  {VOICE_ENGINES[engine]?.label ?? engine} needs a tap to play
+                  audio. Tap below to hear the interviewer.
+                </p>
+                <Button size="sm" onClick={resumeSpeech}>
+                  <Call02Icon size={16} className="mr-2 shrink-0" /> Tap to hear
+                </Button>
+              </div>
+            )}
+
+            <div className="flex flex-col items-center gap-2 pb-2">
+              {downloads && (
+                <div className="w-full max-w-sm space-y-2 text-xs">
+                  <p className="text-center font-medium">
+                    Preparing the interviewer — downloading voice models
+                  </p>
+                  {downloads.voice && (
+                    <DownloadBar label="Interviewer voice model" {...downloads.voice} />
+                  )}
+                  {downloads.stt && (
+                    <DownloadBar label="Speech recognition model" {...downloads.stt} />
+                  )}
+                </div>
+              )}
+              {["listening", "recording", "processing", "assistant"].includes(status) && (
                 <button
                   type="button"
                   onPointerDown={handlePressStart}
                   onPointerUp={handlePressEnd}
                   onPointerLeave={handlePressEnd}
                   disabled={!["listening", "recording"].includes(status)}
-                  className={`flex size-20 items-center justify-center rounded-full text-white shadow-lg transition-all ${
+                  className={`flex size-24 items-center justify-center rounded-full text-white shadow-lg transition-all ${
                     status === "recording"
                       ? "bg-destructive scale-105"
                       : "bg-primary hover:bg-primary/90 disabled:opacity-50"
                   }`}
                 >
-                  {status === "recording" ? <PauseIcon size={26} className="shrink-0" /> : <Call02Icon size={28} className="shrink-0" />}
+                  {status === "recording" ? <PauseIcon size={30} className="shrink-0" /> : <Call02Icon size={32} className="shrink-0" />}
                 </button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={completeInterview}
-                  disabled={status === "assistant"}
-                >
-                  End Interview
-                </Button>
+              )}
+              <div className="min-h-5 text-center text-sm text-muted-foreground">
+                {personaHint}
               </div>
-            )}
+            </div>
           </>
         )}
 
-        {error && <p className="mt-4 text-center text-sm text-destructive">{error}</p>}
+        {error && <p className="text-center text-sm text-destructive">{error}</p>}
       </main>
+
+      <Dialog open={showCallGuide} onOpenChange={(o) => !o && dismissCallGuide()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>How to answer</DialogTitle>
+            <DialogDescription>
+              This is a voice interview — just talk like you would on a call.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+              <Call02Icon size={20} className="shrink-0" />
+              <p>
+                <strong>Hold the mic button</strong> to speak, release when
+                you&apos;re done.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+              <span className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs">
+                Space
+              </span>
+              <p>
+                Or <strong>press and hold the Space bar</strong> to talk and
+                release to answer.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={dismissCallGuide}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function DownloadBar({
+  label,
+  loaded,
+  total,
+}: {
+  label: string;
+  loaded: number;
+  total: number;
+}) {
+  const pct = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-muted-foreground">
+        <span>{label}</span>
+        <span className="tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
@@ -600,10 +791,34 @@ function InterviewResults({
         <CardContent className="space-y-6">
           {feedback && (
             <>
-              <section>
-                <h3 className="mb-1 text-sm font-semibold">Summary</h3>
-                <p className="text-sm text-muted-foreground">{feedback.summary}</p>
-              </section>
+              <div className="flex items-start justify-between gap-4">
+                <section>
+                  <h3 className="mb-1 text-sm font-semibold">Summary</h3>
+                  <p className="text-sm text-muted-foreground">{feedback.summary}</p>
+                </section>
+                {feedback.score != null && feedback.score > 0 && (
+                  <div className="flex shrink-0 flex-col items-center">
+                    <div
+                      className={`flex size-16 items-center justify-center rounded-full border-4 text-xl font-bold ${
+                        feedback.score >= 8
+                          ? "border-primary text-primary"
+                          : feedback.score >= 5
+                            ? "border-yellow-400 text-yellow-500"
+                            : "border-red-400 text-red-500"
+                      }`}
+                    >
+                      {feedback.score}/10
+                    </div>
+                    <a
+                      href="/leaderboard"
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      <DashboardSquare01Icon size={14} />
+                      Leaderboard
+                    </a>
+                  </div>
+                )}
+              </div>
               <section>
                 <h3 className="mb-2 text-sm font-semibold">Strengths</h3>
                 <ul className="list-inside list-disc space-y-1 text-sm">

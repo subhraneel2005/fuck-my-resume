@@ -173,3 +173,15 @@ export function enginesForProvider(provider: Provider): VoiceEngine[] {
 export function engineConfig(engine: VoiceEngine): VoiceEngineConfig {
   return VOICE_ENGINES[engine];
 }
+
+// Clamps a stored voice id to the ones valid for the engine. This prevents a
+// stale OpenAI voice (e.g. "alloy") from reaching Kokoro, which only accepts
+// af_*/am_*/bf_*/bm_* ids. Falls back to the engine's default voice.
+export function resolveTtsVoice(
+  engine: VoiceEngine,
+  stored: string | null | undefined
+): string {
+  const config = engineConfig(engine);
+  if (stored && config.voices.some((v) => v.id === stored)) return stored;
+  return config.defaultVoice;
+}
