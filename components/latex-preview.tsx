@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { pdf } from "@react-pdf/renderer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,6 +11,7 @@ import { Copy01Icon } from "@/components/ui/copy-01"
 import { CircleCheckIcon } from "@/components/ui/circle-check"
 import { RefreshIcon } from "@/components/ui/refresh"
 import { ResumePreview } from "@/components/resume-preview"
+import { PdfResume } from "@/components/pdf-resume"
 import type { Resume } from "@/lib/schemas/resume"
 import type { Highlights } from "@/lib/highlights"
 
@@ -36,18 +38,7 @@ export function LaTeXPreview({
   const handleDownloadPDF = async () => {
     setIsDownloading(true)
     try {
-      const response = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ latex: latexCode }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || data.error || "Failed to generate PDF")
-      }
-
-      const blob = await response.blob()
+      const blob = await pdf(<PdfResume resume={resumeData} />).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url

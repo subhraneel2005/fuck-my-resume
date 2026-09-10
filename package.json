@@ -20,6 +20,7 @@
     "@huggingface/transformers": "^4.2.0",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-use-controllable-state": "^1.2.6",
+    "@react-pdf/renderer": "^4.9.0",
     "@rive-app/react-webgl2": "^4.34.1",
     "@shadcn/react": "^0.3.0",
     "@streamdown/cjk": "^1.0.3",
