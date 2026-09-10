@@ -22,7 +22,7 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-background/80 px-6 py-3 backdrop-blur-sm">
       <Link href={"/"} className="flex items-center gap-1.5">
         <MagicWand01Icon size={16} className="shrink-0 text-primary" />
-        <span className="text-primary font-bold tracking-tighter text-sm">fuckmyresume.lol</span></Link>
+        <span className="text-primary font-bold tracking-tighter text-sm">fuckmyresume</span></Link>
       <div className="flex items-center gap-2">
         <Link href="/leaderboard">
           <Button variant="ghost" size="sm">
