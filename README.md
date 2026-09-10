@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="public/Fuck%20my%20Resume%20Banner.png" alt="Fuck My Resume Banner" width="100%" />
+  <img src="public/fmr-opengraph.png" alt="Fuck My Resume Banner" width="100%" />
 </p>
 
-Tired of your resume gathering dust? **Fuck My Resume** turns a boring PDF into a fresh, job-tailored resume — then helps you land the gig with cold outreach, a live AI mock interview, and a public leaderboard to flex your score. This app runs **100% on your own API keys** — bring your own, delete your data, no subscription wall.
+<p align="center"> <a href="https://github.com/subhraneel2005/fuck-my-resume"> <img src="https://img.shields.io/github/stars/subhraneel2005/fuck-my-resume?style=for-the-badge&logo=github&label=Stars" alt="GitHub Stars"> </a> <a href="https://github.com/subhraneel2005/fuck-my-resume"> <a href="https://github.com/subhraneel2005/fuck-my-resume"> <img src="https://img.shields.io/github/last-commit/subhraneel2005/fuck-my-resume?style=for-the-badge&label=Last%20Commit" alt="Last Commit"> </a> <a href="https://fuck-my-resume.vercel.app/"> <img src="https://img.shields.io/badge/Live-Demo-black?style=for-the-badge&logo=vercel" alt="Live Demo"> </a> </p>
 
-[**Star on GitHub**](https://github.com/subhraneel2005/fuck-my-resume) · [**Launch on Product Hunt**](https://www.producthunt.com/products/fuck-my-resume)
+Tired of your resume gathering dust? **Fuck My Resume** turns a boring PDF into a fresh, job-tailored resume — then helps you land the gig with cold outreach, a live AI mock interview, and a public leaderboard to flex your score. This app runs **100% on your own API keys** — bring your own, delete your data, no subscription wall.
 
 ---
 
