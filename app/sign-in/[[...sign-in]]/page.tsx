@@ -1,11 +1,12 @@
 "use client";
 
+import { FaGithub } from "react-icons/fa";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
-  const handleGoogleSignIn = () => {
-    authClient.signIn.social({ provider: "google", callbackURL: "/generate" });
+  const handleSignIn = (provider: "google" | "github") => {
+    authClient.signIn.social({ provider, callbackURL: "/generate" });
   };
 
   return (
@@ -14,13 +15,13 @@ export default function SignInPage() {
         <div className="space-y-2 text-center">
           <h1 className="text-2xl leading-tighter font-bold">Sign in</h1>
           <p className="text-sm text-muted-foreground">
-            Continue with your Google account
+            Continue with your Google or GitHub account
           </p>
         </div>
         <Button
           variant="outline"
           className="w-full"
-          onClick={handleGoogleSignIn}
+          onClick={() => handleSignIn("google")}
         >
           <svg className="mr-2 size-4" viewBox="0 0 24 24">
             <path
@@ -41,6 +42,19 @@ export default function SignInPage() {
             />
           </svg>
           Sign in with Google
+        </Button>
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => handleSignIn("github")}
+        >
+          <FaGithub className="mr-2 size-4" />
+          Sign in with GitHub
         </Button>
       </div>
     </div>
