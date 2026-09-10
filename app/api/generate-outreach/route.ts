@@ -5,6 +5,7 @@ import { aiSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
 import { generateOutreach } from "@/lib/outreach-generator";
+import { DEFAULT_BRAIN_MODEL, type Provider } from "@/lib/interview-models";
 import type { Resume } from "@/lib/schemas/resume";
 
 export async function POST(request: NextRequest) {
@@ -33,7 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const provider = settings.provider as Provider;
     const apiKey = decrypt(settings.apiKey);
+    const modelId = settings.model || DEFAULT_BRAIN_MODEL[provider];
 
     const { resume, jobDescription } = await request.json();
 
@@ -47,8 +50,9 @@ export async function POST(request: NextRequest) {
     const outreach = await generateOutreach(
       resume as Resume,
       jobDescription,
-      settings.provider as "openai" | "google",
-      apiKey
+      provider,
+      apiKey,
+      modelId
     );
 
     return NextResponse.json({ outreach });

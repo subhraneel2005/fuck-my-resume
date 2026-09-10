@@ -3,6 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import type { Resume } from "@/lib/schemas/resume";
+import { DEFAULT_BRAIN_MODEL, type Provider } from "@/lib/interview-models";
 
 const outreachValuesSchema = z.object({
   coldEmail: z.object({
@@ -31,20 +32,22 @@ const outreachValuesSchema = z.object({
 
 type OutreachValues = z.infer<typeof outreachValuesSchema>;
 
-function getModel(provider: "openai" | "google", apiKey: string) {
+function getModel(provider: Provider, apiKey: string, modelId?: string) {
+  const model = modelId || DEFAULT_BRAIN_MODEL[provider];
   if (provider === "google") {
     const google = createGoogleGenerativeAI({ apiKey });
-    return google("gemini-3.5-flash");
+    return google(model);
   }
   const openai = createOpenAI({ apiKey });
-  return openai("gpt-4o");
+  return openai(model);
 }
 
 export async function generateOutreach(
   resume: Resume,
   jobDescription: string,
-  provider: "openai" | "google",
-  apiKey: string
+  provider: Provider,
+  apiKey: string,
+  modelId?: string
 ): Promise<OutreachValues> {
   const resumeSummary = [
     `Name: ${resume.contact.name}`,
@@ -59,7 +62,7 @@ export async function generateOutreach(
     .join("\n");
 
   const { output } = await generateText({
-    model: getModel(provider, apiKey),
+    model: getModel(provider, apiKey, modelId),
     instructions: `You are an expert outreach copywriter. Given a resume and a job description, fill in the template values for a cold email and a cold DM.
 
 RULES:
