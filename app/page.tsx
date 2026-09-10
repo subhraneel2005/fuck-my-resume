@@ -3,10 +3,16 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
+import type { ReactPlayerProps } from "react-player/types"
 import { authClient } from "@/lib/auth-client"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+
+const ReactPlayer = dynamic(() => import("react-player"), {
+  ssr: false,
+}) as React.ComponentType<ReactPlayerProps>
 
 export default function Page() {
   const { data: session } = authClient.useSession()
@@ -56,6 +62,17 @@ export default function Page() {
               src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1246942&theme=light&t=1789064712572"
             />
           </a>
+        </div>
+
+        <div className="mt-20 w-full max-w-3xl overflow-hidden rounded-xl border shadow-sm">
+          <div className="aspect-video">
+            <ReactPlayer
+              src="https://youtu.be/I9sEfhTnWJw"
+              width="100%"
+              height="100%"
+              controls
+            />
+          </div>
         </div>
 
         <div className="mt-20 grid max-w-3xl gap-8 sm:grid-cols-3">
