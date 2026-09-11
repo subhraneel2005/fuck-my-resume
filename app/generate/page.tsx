@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import Link from "next/link"
 import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { CircleCheckIcon } from "@/components/ui/circle-check"
@@ -10,6 +11,17 @@ import { ArrowRight02Icon } from "@/components/ui/arrow-right-02"
 import { UndoIcon } from "@/components/ui/undo"
 import { CloudDownloadIcon } from "@/components/ui/cloud-download"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Stepper,
   StepperContent,
@@ -47,7 +59,7 @@ export default function GeneratePage() {
   const [highlights, setHighlights] = useState<Highlights | null>(null)
   const [coldEmail, setColdEmail] = useState<string | null>(null)
   const [coldDM, setColdDM] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ message: string; toSettings: boolean } | null>(null)
 
   const effectiveStep = isSignedIn ? Math.max(currentStep, 2) : currentStep
 
@@ -82,7 +94,14 @@ export default function GeneratePage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || "Failed to parse resume")
+        setError({
+          message:
+            data.hint ||
+            data.error ||
+            "Failed to parse resume. Check your API key in Settings.",
+          toSettings: !!data.redirect || response.status === 403,
+        })
+        return
       }
 
       const { resume, highlights } = await response.json()
@@ -130,7 +149,10 @@ export default function GeneratePage() {
       // Move to result view
       setCurrentStep(4)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      setError({
+        message: err instanceof Error ? err.message : "Something went wrong",
+        toSettings: false,
+      })
     } finally {
       setIsProcessing(false)
     }
@@ -268,9 +290,31 @@ export default function GeneratePage() {
           </CardFooter>
         </Stepper>
         {error && (
-          <div className="px-6 pb-4">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
+          <AlertDialog open onOpenChange={() => setError(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogMedia>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </AlertDialogMedia>
+                <AlertDialogTitle>Something went wrong</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {error.message}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Close</AlertDialogCancel>
+                {error.toSettings && (
+                  <Link href="/settings">
+                    <AlertDialogAction>Open Settings</AlertDialogAction>
+                  </Link>
+                )}
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </Card>
     </div>

@@ -25,5 +25,13 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      // Same-email Google/GitHub logins merge into one account instead of
+      // creating a second user (which would orphan their BYOK settings).
+      trustedProviders: ["google", "github"],
+    },
+  },
   plugins: [nextCookies()],
 });

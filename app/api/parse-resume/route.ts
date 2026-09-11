@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
 import { parseResumeWithLLM } from "@/lib/llm";
 import { buildHighlights } from "@/lib/highlights";
+import { describeLlmError } from "@/lib/llm-errors";
 import { DEFAULT_BRAIN_MODEL, type Provider } from "@/lib/interview-models";
 
 export async function POST(request: NextRequest) {
@@ -25,10 +26,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!settings) {
+      console.error(
+        `parse-resume 403: no ai_settings row for user ${session.user.id} ` +
+          `(email: ${session.user.email ?? "?"})`
+      );
       return NextResponse.json(
         {
           error: "AI provider not configured",
           redirect: "/settings",
+          hint: `Signed in as ${session.user.email ?? "unknown"}. Your API key may be saved under a different account.`,
         },
         { status: 403 }
       );
@@ -66,8 +72,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ resume, aiChanges, highlights });
   } catch (error) {
     console.error("Parse resume error:", error);
+    const info = describeLlmError(error);
     return NextResponse.json(
-      { error: "Failed to parse resume" },
+      {
+        error: info.message,
+        code: info.code,
+        redirect: info.toSettings ? "/settings" : undefined,
+      },
       { status: 500 }
     );
   }

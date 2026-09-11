@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { aiSettings, interviewSessions, user } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
+import { describeLlmError } from "@/lib/llm-errors";
 import { z } from "zod";
 import type { InterviewConfig } from "@/lib/interview-config";
 
@@ -55,9 +56,23 @@ export async function POST(
     where: eq(aiSettings.userId, session.user.id),
   });
 
-  const feedback: Feedback | null = settings
-    ? await generateFeedback(settings, interview, transcriptMarkdown)
-    : null;
+  let feedback: Feedback | null = null;
+  if (settings) {
+    try {
+      feedback = await generateFeedback(settings, interview, transcriptMarkdown);
+    } catch (error) {
+      console.error("Interview feedback error:", error);
+      const info = describeLlmError(error);
+      return NextResponse.json(
+        {
+          error: info.message,
+          code: info.code,
+          redirect: info.toSettings ? "/settings" : undefined,
+        },
+        { status: 500 }
+      );
+    }
+  }
 
   const wasCompleted = interview.status === "completed";
 

@@ -5,6 +5,7 @@ import { aiSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "@/lib/encryption";
 import { generateOutreach } from "@/lib/outreach-generator";
+import { describeLlmError } from "@/lib/llm-errors";
 import { DEFAULT_BRAIN_MODEL, type Provider } from "@/lib/interview-models";
 import type { Resume } from "@/lib/schemas/resume";
 
@@ -58,8 +59,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ outreach });
   } catch (error) {
     console.error("Generate outreach error:", error);
+    const info = describeLlmError(error);
     return NextResponse.json(
-      { error: "Failed to generate outreach content" },
+      {
+        error: info.message,
+        code: info.code,
+        redirect: info.toSettings ? "/settings" : undefined,
+      },
       { status: 500 }
     );
   }
