@@ -9,7 +9,10 @@ import type { ReactPlayerProps } from "react-player/types"
 import { authClient } from "@/lib/auth-client"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { COUNTRIES, COUNTRY_COUNT, formatVisitors } from "@/lib/country-stats"
+import { ArrowUpRight01Icon } from "@/components/ui/arrow-up-right-01"
 
 const ReactPlayer = dynamic(() => import("react-player"), {
   ssr: false,
@@ -37,6 +40,24 @@ export default function Page() {
           height={64}
           className="mb-8 size-16 rounded-2xl"
         />
+
+<Badge
+          variant="outline"
+          className="mb-6 py-4 px-2 text-sm"
+          render={
+            <a
+              href="https://subhraneel2005.github.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+        >
+          built with ❤️ by me 
+          <Avatar size="sm" className="ring-1 ring-primary-foreground/25">
+            <AvatarImage src="/me.png" alt="Subhraneel" />
+            <AvatarFallback>S</AvatarFallback>
+          </Avatar>
+        </Badge>
 
         <h1 className="max-w-2xl text-5xl leading-tighter font-black tracking-tight sm:text-6xl lg:text-7xl">
           Your resume is shit💩
