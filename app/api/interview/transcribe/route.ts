@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { aiSettings, interviewSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, migrateApiKeyIfLegacy } from "@/lib/encryption";
 import { engineConfig } from "@/lib/interview-models";
 import { z } from "zod";
 
@@ -78,6 +78,15 @@ export async function POST(request: NextRequest) {
   }
 
   const apiKey = decrypt(settings.apiKey);
+
+  const migrated = migrateApiKeyIfLegacy(settings.apiKey);
+  if (migrated) {
+    await db
+      .update(aiSettings)
+      .set({ apiKey: migrated, updatedAt: new Date() })
+      .where(eq(aiSettings.userId, session.user.id));
+  }
+
   const voiceConfig = engineConfig("openai");
 
   const sttModel =

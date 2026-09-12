@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { aiSettings, interviewSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, migrateApiKeyIfLegacy } from "@/lib/encryption";
 import { DEFAULT_BRAIN_MODEL } from "@/lib/interview-models";
 import { z } from "zod";
 import type { InterviewConfig } from "@/lib/interview-config";
@@ -103,6 +103,15 @@ export async function POST(request: NextRequest) {
 
   const provider = settings.provider as "openai" | "google";
   const apiKey = decrypt(settings.apiKey);
+
+  const migrated = migrateApiKeyIfLegacy(settings.apiKey);
+  if (migrated) {
+    await db
+      .update(aiSettings)
+      .set({ apiKey: migrated, updatedAt: new Date() })
+      .where(eq(aiSettings.userId, session.user.id));
+  }
+
   const modelId =
     interview.model || settings.interviewerModel || DEFAULT_BRAIN_MODEL[provider];
 

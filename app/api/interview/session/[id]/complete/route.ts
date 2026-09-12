@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { aiSettings, interviewSessions, user } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, migrateApiKeyIfLegacy } from "@/lib/encryption";
 import { describeLlmError } from "@/lib/llm-errors";
 import { z } from "zod";
 import type { InterviewConfig } from "@/lib/interview-config";
@@ -58,6 +58,13 @@ export async function POST(
 
   let feedback: Feedback | null = null;
   if (settings) {
+    const migrated = migrateApiKeyIfLegacy(settings.apiKey);
+    if (migrated) {
+      await db
+        .update(aiSettings)
+        .set({ apiKey: migrated, updatedAt: new Date() })
+        .where(eq(aiSettings.userId, session.user.id));
+    }
     try {
       feedback = await generateFeedback(settings, interview, transcriptMarkdown);
     } catch (error) {

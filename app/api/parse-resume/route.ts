@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { aiSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, migrateApiKeyIfLegacy } from "@/lib/encryption";
 import { parseResumeWithLLM } from "@/lib/llm";
 import { buildHighlights } from "@/lib/highlights";
 import { describeLlmError } from "@/lib/llm-errors";
@@ -42,6 +42,15 @@ export async function POST(request: NextRequest) {
 
     const provider = settings.provider as Provider;
     const apiKey = decrypt(settings.apiKey);
+
+    const migrated = migrateApiKeyIfLegacy(settings.apiKey);
+    if (migrated) {
+      await db
+        .update(aiSettings)
+        .set({ apiKey: migrated, updatedAt: new Date() })
+        .where(eq(aiSettings.userId, session.user.id));
+    }
+
     const modelId = settings.model || DEFAULT_BRAIN_MODEL[provider];
 
     const body = await request.json();

@@ -1,12 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RefreshIcon } from "@/components/ui/refresh";
 import { Delete02Icon } from "@/components/ui/delete-02";
+import { CircleCheckIcon } from "@/components/ui/circle-check";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
@@ -39,6 +51,8 @@ interface AiSettings {
   updatedAt: string;
 }
 
+type KeyDialogState = null | "validating" | "success" | "invalid";
+
 export function AiProviderForm() {
   const { data: session } = authClient.useSession();
   const [settings, setSettings] = useState<AiSettings | null>(null);
@@ -54,6 +68,10 @@ export function AiProviderForm() {
   const [ttsVoice, setTtsVoice] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [keyDialog, setKeyDialog] = useState<KeyDialogState>(null);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [rotateOpen, setRotateOpen] = useState(false);
+  const apiKeyRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -117,6 +135,11 @@ export function AiProviderForm() {
     setError(null);
     setSuccess(false);
 
+    const hasNewKey = apiKey.trim().length > 0;
+    if (hasNewKey) {
+      setKeyDialog("validating");
+    }
+
     try {
       const res = await fetch("/api/settings/ai-provider", {
         method: "POST",
@@ -133,16 +156,35 @@ export function AiProviderForm() {
         }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save");
+        const message = data?.error || "Failed to save";
+        if (hasNewKey) {
+          setDialogMessage(message);
+          setKeyDialog("invalid");
+        } else {
+          setError(message);
+        }
+        return;
       }
 
-      setSuccess(true);
+      if (hasNewKey) {
+        setKeyDialog("success");
+      } else {
+        setSuccess(true);
+      }
       setApiKey(""); // Clear the input
       await fetchSettings(); // Refresh settings
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      if (keyDialog === "validating") {
+        setDialogMessage(
+          err instanceof Error ? err.message : "Something went wrong"
+        );
+        setKeyDialog("invalid");
+      } else {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      }
     } finally {
       setSaving(false);
     }
@@ -178,6 +220,14 @@ export function AiProviderForm() {
     }
   }
 
+  function handleRotateConfirm() {
+    setApiKey("");
+    setRotateOpen(false);
+    setTimeout(() => apiKeyRef.current?.focus(), 50);
+  }
+
+  const providerLabel = provider === "google" ? "Google AI" : "OpenAI";
+
   if (loading) {
     return (
       <Card>
@@ -204,8 +254,8 @@ export function AiProviderForm() {
         <CardHeader>
           <CardTitle>AI Provider</CardTitle>
           <CardDescription>
-            Configure your own API key for AI features. Your key is encrypted and
-            stored securely.
+            Configure your own API key for AI features. Your key is verified
+            against {providerLabel} before saving and encrypted at rest.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -226,16 +276,28 @@ export function AiProviderForm() {
                     </p>
                   )}
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={saving}
-                >
-                  <Delete02Icon size={14} className="mr-1.5 shrink-0" />
-                  Remove
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => setRotateOpen(true)}
+                    disabled={saving}
+                  >
+                    <RefreshIcon size={14} className="mr-1.5 shrink-0" />
+                    Rotate Key
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={saving}
+                  >
+                    <Delete02Icon size={14} className="mr-1.5 shrink-0" />
+                    Remove
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -264,6 +326,7 @@ export function AiProviderForm() {
               </Label>
               <Input
                 id="apiKey"
+                ref={apiKeyRef}
                 type="password"
                 placeholder={
                   provider === "openai" ? "sk-..." : "AIza..."
@@ -420,6 +483,95 @@ export function AiProviderForm() {
           </div>
         </CardContent>
       </Card>
+
+      {keyDialog === "validating" && (
+        <AlertDialog
+          open
+          onOpenChange={() => {
+            // Keep open while the request is in flight.
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <RefreshIcon className="animate-spin" />
+              </AlertDialogMedia>
+              <AlertDialogTitle>Validating your API key</AlertDialogTitle>
+              <AlertDialogDescription>
+                Checking your key with {providerLabel} before saving. This takes
+                a few seconds.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {keyDialog === "success" && (
+        <AlertDialog open onOpenChange={() => setKeyDialog(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <CircleCheckIcon className="text-green-600" />
+              </AlertDialogMedia>
+              <AlertDialogTitle>API key verified</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your new key works and has been saved securely. It's now used
+                for resume, outreach, and mock interview features.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setKeyDialog(null)}>
+                Done
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {keyDialog === "invalid" && (
+        <AlertDialog open onOpenChange={() => setKeyDialog(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </AlertDialogMedia>
+              <AlertDialogTitle>Invalid API key</AlertDialogTitle>
+              <AlertDialogDescription>{dialogMessage}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Close</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {rotateOpen && (
+        <AlertDialog open onOpenChange={setRotateOpen}>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <RefreshIcon />
+              </AlertDialogMedia>
+              <AlertDialogTitle>Rotate API key?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your current key will be replaced. Paste the new key after
+                confirming, then save. The old key will stop working for AI
+                features immediately.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRotateConfirm}>
+                Rotate key
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </form>
   );
 }

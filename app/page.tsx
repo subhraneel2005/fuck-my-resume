@@ -9,6 +9,7 @@ import type { ReactPlayerProps } from "react-player/types"
 import { authClient } from "@/lib/auth-client"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { COUNTRIES, COUNTRY_COUNT, formatVisitors } from "@/lib/country-stats"
 
 const ReactPlayer = dynamic(() => import("react-player"), {
   ssr: false,
@@ -79,6 +80,29 @@ export default function Page() {
           <Feature title="Resume Tailoring" desc="AI rewrites your resume to match any job description in seconds." />
           <Feature title="Cold Outreach" desc="Auto-generated emails and LinkedIn DMs that actually get replies." />
           <Feature title="Mock Interviews" desc="AI interviewer that scores you and tells you exactly where you suck." />
+        </div>
+
+        <div className="mt-20 w-full max-w-4xl">
+          <h2 className="text-xl leading-tighter font-black tracking-tight sm:text-2xl">
+            650+ users from {COUNTRY_COUNT} countries worldwide
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Real traffic from real people who want a better resume.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
+            {COUNTRIES.map((c) => (
+              <span
+                key={c.name}
+                title={`${c.name} · ${formatVisitors(c.visits)} visitors`}
+                className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1.5 text-sm text-foreground"
+              >
+                <span className="text-base leading-none" aria-hidden="true">
+                  {c.flag}
+                </span>
+                <span className="tabular-nums">{formatVisitors(c.visits)}</span>
+              </span>
+            ))}
+          </div>
         </div>
 
         <p className="mt-16 text-xs text-muted-foreground">

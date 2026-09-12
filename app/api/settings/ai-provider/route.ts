@@ -12,6 +12,7 @@ import {
   type Provider,
   type VoiceEngine,
 } from "@/lib/interview-models";
+import { validateProviderKey } from "@/lib/key-validation";
 
 async function getSession(request: NextRequest) {
   return auth.api.getSession({
@@ -92,8 +93,10 @@ export async function POST(request: NextRequest) {
 
   // Keep existing key when not re-entered (matches "leave blank to keep current")
   let resolvedApiKey: string | undefined;
-  if (apiKey && typeof apiKey === "string" && apiKey.trim()) {
-    resolvedApiKey = apiKey;
+  const newKeyProvided =
+    typeof apiKey === "string" && apiKey.trim().length > 0;
+  if (newKeyProvided) {
+    resolvedApiKey = apiKey.trim();
   } else if (existing) {
     resolvedApiKey = decrypt(existing.apiKey);
   }
@@ -103,6 +106,18 @@ export async function POST(request: NextRequest) {
       { error: "provider and apiKey are required" },
       { status: 400 }
     );
+  }
+
+  // Validate a newly-entered key against the provider before persisting it, so
+  // bad keys never land in the DB and users get instant feedback.
+  if (newKeyProvided) {
+    const validation = await validateProviderKey(resolvedProvider, resolvedApiKey);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.message, code: validation.code },
+        { status: 400 }
+      );
+    }
   }
 
   // Validate voice engine against the provider (Google can only use browser voice).
